@@ -29,7 +29,7 @@ class DT_Contact_Portal_Tile
      */
     public function dt_details_additional_tiles( $tiles, $post_type = "" ) {
         if ( $post_type === "contacts" || $post_type === "contact_portal" ){
-            $tiles["dt_contact_portal"] = [ "label" => __( "Contact Portal", 'dt-contact-portal' ) ];
+            $tiles["dt_contact_portal"] = [ "label" => __( "Contact Portal", 'disciple-tools-contact-portal' ) ];
         }
         return $tiles;
     }
@@ -59,8 +59,8 @@ class DT_Contact_Portal_Tile
              * This is an example of a text field
              */
             $fields['dt_contact_portal_text'] = [
-                'name'        => __( 'Text', 'dt-contact-portal' ),
-                'description' => _x( 'Text', 'Optional Documentation', 'dt-contact-portal' ),
+                'name'        => __( 'Text', 'disciple-tools-contact-portal' ),
+                'description' => _x( 'Text', 'Optional Documentation', 'disciple-tools-contact-portal' ),
                 'type'        => 'text',
                 'default'     => '',
                 'tile' => 'dt_contact_portal',
@@ -70,12 +70,12 @@ class DT_Contact_Portal_Tile
              * This is an example of a multiselect field
              */
             $fields["dt_contact_portal_multiselect"] = [
-                "name" => __( 'Multiselect', 'dt-contact-portal' ),
+                "name" => __( 'Multiselect', 'disciple-tools-contact-portal' ),
                 "default" => [
-                    "one" => [ "label" => __( "One", 'dt-contact-portal' ) ],
-                    "two" => [ "label" => __( "Two", 'dt-contact-portal' ) ],
-                    "three" => [ "label" => __( "Three", 'dt-contact-portal' ) ],
-                    "four" => [ "label" => __( "Four", 'dt-contact-portal' ) ],
+                    "one" => [ "label" => __( "One", 'disciple-tools-contact-portal' ) ],
+                    "two" => [ "label" => __( "Two", 'disciple-tools-contact-portal' ) ],
+                    "three" => [ "label" => __( "Three", 'disciple-tools-contact-portal' ) ],
+                    "four" => [ "label" => __( "Four", 'disciple-tools-contact-portal' ) ],
                 ],
                 "tile" => "dt_contact_portal",
                 "type" => "multi_select",
@@ -91,18 +91,18 @@ class DT_Contact_Portal_Tile
                 "tile" => "dt_contact_portal",
                 'default' => [
                     'first'   => [
-                        "label" => _x( 'First', 'Key Select Label', 'dt-contact-portal' ),
-                        "description" => _x( "First Key Description", "Training Status field description", 'dt-contact-portal' ),
+                        "label" => _x( 'First', 'Key Select Label', 'disciple-tools-contact-portal' ),
+                        "description" => _x( "First Key Description", "Training Status field description", 'disciple-tools-contact-portal' ),
                         'color' => "#ff9800"
                     ],
                     'second'   => [
-                        "label" => _x( 'Second', 'Key Select Label', 'dt-contact-portal' ),
-                        "description" => _x( "Second Key Description", "Training Status field description", 'dt-contact-portal' ),
+                        "label" => _x( 'Second', 'Key Select Label', 'disciple-tools-contact-portal' ),
+                        "description" => _x( "Second Key Description", "Training Status field description", 'disciple-tools-contact-portal' ),
                         'color' => "#4CAF50"
                     ],
                     'third'   => [
-                        "label" => _x( 'Third', 'Key Select Label', 'dt-contact-portal' ),
-                        "description" => _x( "Third Key Description", "Training Status field description", 'dt-contact-portal' ),
+                        "label" => _x( 'Third', 'Key Select Label', 'disciple-tools-contact-portal' ),
+                        "description" => _x( "Third Key Description", "Training Status field description", 'disciple-tools-contact-portal' ),
                         'color' => "#366184"
                     ],
                 ],

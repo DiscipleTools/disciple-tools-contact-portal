@@ -74,7 +74,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
     public function dt_details_additional_tiles( $tiles, $post_type = "" ) {
         if ( $post_type === $this->post_type ){
             $tiles["dt_starters_magic_url"] = [
-                "label" => __( "Magic Url", 'dt-contact-portal' ),
+                "label" => __( "Magic Url", 'disciple-tools-contact-portal' ),
                 "description" => "The Magic URL sets up a page accessible without authentication, only the link is needed. Useful for small applications liked to this record, like quick surveys or updates."
             ];
         }
@@ -148,7 +148,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                 'nonce' => wp_create_nonce( 'wp_rest' ),
                 'parts' => $this->parts,
                 'translations' => [
-                    'add' => __( 'Add Magic', 'dt-contact-portal' ),
+                    'add' => __( 'Add Magic', 'disciple-tools-contact-portal' ),
                 ],
             ]) ?>][0]
 

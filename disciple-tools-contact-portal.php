@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: Disciple Tools - Contact Portal
- * Plugin URI: https://github.com/DiscipleTools/dt-contact-portal
+ * Plugin URI: https://github.com/DiscipleTools/disciple-tools-contact-portal
  * Description: Disciple Tools - Contact Portal is intended to help developers and integrator jumpstart their extension of the Disciple Tools system.
- * Text Domain: dt-contact-portal
+ * Text Domain: disciple-tools-contact-portal
  * Domain Path: /languages
  * Version:  0.1
  * Author URI: https://github.com/DiscipleTools
- * GitHub Plugin URI: https://github.com/DiscipleTools/dt-contact-portal
+ * GitHub Plugin URI: https://github.com/DiscipleTools/disciple-tools-contact-portal
  * Requires at least: 4.7.0
  * (Requires 4.7+ because of the integration of the REST API at 4.7 and the security requirements of this milestone version.)
  * Tested up to: 5.6
@@ -16,14 +16,6 @@
  * @link    https://github.com/DiscipleTools
  * @license GPL-2.0 or later
  *          https://www.gnu.org/licenses/gpl-2.0.html
- */
-
-/**
- * Refactoring (renaming) this plugin as your own:
- * 1. @todo Rename the `dt-contact-portal.php file.
- * 2. @todo Refactor all occurrences of the name DT_Contact_Portal, dt_contact_portal, dt-contact-portal, contact_portal, and "Contact Portal"
- * 3. @todo Update the README.md and LICENSE
- * 4. @todo Update the default.pot file if you intend to make your plugin multilingual. Use a tool like POEdit
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -38,7 +30,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return object|bool
  */
 function dt_contact_portal() {
-    $dt_contact_portal_required_dt_theme_version = '1.0';
+    $dt_contact_portal_required_dt_theme_version = '1.12';
     $wp_theme = wp_get_theme();
     $version = $wp_theme->version;
 
@@ -84,68 +76,19 @@ class DT_Contact_Portal {
 
     private function __construct() {
         $is_rest = dt_is_rest();
-        /**
-         * @todo Decide if you want to use the REST API example
-         * To remove: delete this following line and remove the folder named /rest-api
-         */
-        if ( $is_rest && strpos( dt_get_url_path(), 'dt_contact_portal_template' ) !== false ) {
-            require_once( 'rest-api/rest-api.php' ); // adds starter rest api class
-        }
 
-        /**
-         * @todo Decide if you want to create a new post type
-         * To remove: delete the line below and remove the folder named /post-type
-         */
-        require_once( 'post-type/loader.php' ); // add starter post type extension to Disciple Tools system
-
-        /**
-         * @todo Decide if you want to create a custom site-to-site link
-         * To remove: delete the line below and remove the folder named /site-link
-         */
-        require_once( 'site-link/custom-site-to-site-links.php' ); // add site to site link class and capabilities
-
-        /**
-         * @todo Decide if you want to add new charts to the metrics section
-         * To remove: delete the line below and remove the folder named /charts
-         */
-        if ( strpos( dt_get_url_path(), 'metrics' ) !== false || ( $is_rest && strpos( dt_get_url_path(), 'dt-contact-portal-metrics' ) !== false ) ){
+        if ( strpos( dt_get_url_path(), 'metrics' ) !== false || ( $is_rest && strpos( dt_get_url_path(), 'disciple-tools-contact-portal-metrics' ) !== false ) ){
             require_once( 'charts/charts-loader.php' );  // add custom charts to the metrics area
         }
 
-        /**
-         * @todo Decide if you want to add a custom tile or settings page tile
-         * To remove: delete the lines below and remove the folder named /tile
-         */
         require_once( 'tile/custom-tile.php' ); // add custom tile
         if ( 'settings' === dt_get_url_path() && ! $is_rest ) {
             require_once( 'tile/settings-tile.php' ); // add custom settings page tile
         }
 
-        /**
-         * @todo Decide if you want to create a magic link
-         * To remove: delete the line below and remove the folder named /magic-link
-         */
         require_once( 'magic-link/magic-link-post-type.php' );
-        require_once( 'magic-link/magic-link-user-app.php' );
 
-        /**
-         * @todo Decide if you want to add a custom admin page in the admin area
-         * To remove: delete the 3 lines below and remove the folder named /admin
-         */
-        if ( is_admin() ) {
-            require_once( 'admin/admin-menu-and-tabs.php' ); // adds starter admin page and section for plugin
-        }
-
-        /**
-         * @todo Decide if you want to support localization of your plugin
-         * To remove: delete the line below and remove the folder named /languages
-         */
         $this->i18n();
-
-        /**
-         * @todo Decide if you want to customize links for your plugin in the plugin admin area
-         * To remove: delete the lines below and remove the function named
-         */
         if ( is_admin() ) { // adds links to the plugin description area in the plugin admin list.
             add_filter( 'plugin_row_meta', [ $this, 'plugin_description_links' ], 10, 4 );
         }
@@ -187,7 +130,7 @@ class DT_Contact_Portal {
      */
     public static function deactivation() {
         // add functions here that need to happen on deactivation
-        delete_option( 'dismissed-dt-contact-portal' );
+        delete_option( 'dismissed-disciple-tools-contact-portal' );
     }
 
     /**
@@ -198,7 +141,7 @@ class DT_Contact_Portal {
      * @return void
      */
     public function i18n() {
-        $domain = 'dt-contact-portal';
+        $domain = 'disciple-tools-contact-portal';
         load_plugin_textdomain( $domain, false, trailingslashit( dirname( plugin_basename( __FILE__ ) ) ). 'languages' );
     }
 
@@ -210,7 +153,7 @@ class DT_Contact_Portal {
      * @return string
      */
     public function __toString() {
-        return 'dt-contact-portal';
+        return 'disciple-tools-contact-portal';
     }
 
     /**
@@ -267,18 +210,18 @@ if ( ! function_exists( 'dt_contact_portal_hook_admin_notice' ) ) {
             $message .= ' ' . sprintf( esc_html( 'Current Disciple Tools version: %1$s, required version: %2$s' ), esc_html( $current_version ), esc_html( $dt_contact_portal_required_dt_theme_version ) );
         }
         // Check if it's been dismissed...
-        if ( ! get_option( 'dismissed-dt-contact-portal', false ) ) { ?>
-            <div class="notice notice-error notice-dt-contact-portal is-dismissible" data-notice="dt-contact-portal">
+        if ( ! get_option( 'dismissed-disciple-tools-contact-portal', false ) ) { ?>
+            <div class="notice notice-error notice-disciple-tools-contact-portal is-dismissible" data-notice="disciple-tools-contact-portal">
                 <p><?php echo esc_html( $message );?></p>
             </div>
             <script>
                 jQuery(function($) {
-                    $( document ).on( 'click', '.notice-dt-contact-portal .notice-dismiss', function () {
+                    $( document ).on( 'click', '.notice-disciple-tools-contact-portal .notice-dismiss', function () {
                         $.ajax( ajaxurl, {
                             type: 'POST',
                             data: {
                                 action: 'dismissed_notice_handler',
-                                type: 'dt-contact-portal',
+                                type: 'disciple-tools-contact-portal',
                                 security: '<?php echo esc_html( wp_create_nonce( 'wp_rest_dismiss' ) ) ?>'
                             }
                         })
@@ -302,44 +245,21 @@ if ( ! function_exists( "dt_hook_ajax_notice_handler" )){
     }
 }
 
-/**
- * Plugin Releases and updates
- * @todo Uncomment and change the url if you want to support remote plugin updating with new versions of your plugin
- * To remove: delete the section of code below and delete the file called version-control.json in the plugin root
- *
- * This section runs the remote plugin updating service, so you can issue distributed updates to your plugin
- *
- * @note See the instructions for version updating to understand the steps involved.
- * @link https://github.com/DiscipleTools/dt-contact-portal/wiki/Configuring-Remote-Updating-System
- *
- * @todo Enable this section with your own hosted file
- * @todo An example of this file can be found in (version-control.json)
- * @todo Github is a good option for delivering static json.
- */
-/**
- * Check for plugin updates even when the active theme is not Disciple.Tools
- *
- * Below is the publicly hosted .json file that carries the version information. This file can be hosted
- * anywhere as long as it is publicly accessible. You can download the version file listed below and use it as
- * a template.
- * Also, see the instructions for version updating to understand the steps involved.
- * @see https://github.com/DiscipleTools/disciple-tools-version-control/wiki/How-to-Update-the-Starter-Plugin
- */
-//add_action( 'plugins_loaded', function (){
-//    if ( is_admin() ){
-//        // Check for plugin updates
-//        if ( ! class_exists( 'Puc_v4_Factory' ) ) {
-//            if ( file_exists( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' )){
-//                require( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' );
-//            }
-//        }
-//        if ( class_exists( 'Puc_v4_Factory' ) ){
-//            Puc_v4_Factory::buildUpdateChecker(
-//                'https://raw.githubusercontent.com/DiscipleTools/dt-contact-portal/master/version-control.json',
-//                __FILE__,
-//                'dt-contact-portal'
-//            );
-//
-//        }
-//    }
-//} );
+add_action( 'plugins_loaded', function (){
+    if ( is_admin() ){
+        // Check for plugin updates
+        if ( ! class_exists( 'Puc_v4_Factory' ) ) {
+            if ( file_exists( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' )){
+                require( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' );
+            }
+        }
+        if ( class_exists( 'Puc_v4_Factory' ) ){
+            Puc_v4_Factory::buildUpdateChecker(
+                'https://raw.githubusercontent.com/DiscipleTools/disciple-tools-contact-portal/master/version-control.json',
+                __FILE__,
+                'disciple-tools-contact-portal'
+            );
+
+        }
+    }
+} );

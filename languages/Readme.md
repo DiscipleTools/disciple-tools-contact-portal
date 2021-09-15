@@ -2,4 +2,4 @@
 {translation-domain}-{localisation}.po
 
 ex:
-dt-contact-portal-fr_FR.po
+disciple-tools-contact-portal-fr_FR.po

@@ -40,7 +40,7 @@ class DT_Contact_Portal_Settings_Tile
      */
     public function dt_profile_settings_page_menu( $dt_user, $dt_user_meta, $dt_user_contact_id, $contact_fields ) {
         ?>
-        <li><a href="#dt_contact_portal_settings_id"><?php esc_html_e( 'Custom Settings Section', 'dt-contact-portal' )?></a></li>
+        <li><a href="#dt_contact_portal_settings_id"><?php esc_html_e( 'Custom Settings Section', 'disciple-tools-contact-portal' )?></a></li>
         <?php
     }
 
@@ -55,10 +55,10 @@ class DT_Contact_Portal_Settings_Tile
     public function dt_profile_settings_page_sections( $dt_user, $dt_user_meta, $dt_user_contact_id, $contact_fields ) {
         ?>
         <div class="cell bordered-box" id="dt_contact_portal_settings_id" data-magellan-target="dt_contact_portal_settings_id">
-            <button class="help-button float-right" data-section="dt-contact-portal-help-text">
+            <button class="help-button float-right" data-section="disciple-tools-contact-portal-help-text">
                 <img class="help-icon" src="<?php echo esc_html( get_template_directory_uri() . '/dt-assets/images/help.svg' ) ?>"/>
             </button>
-            <span class="section-header"><?php esc_html_e( 'Custom Settings Section', 'dt-contact-portal' )?></span>
+            <span class="section-header"><?php esc_html_e( 'Custom Settings Section', 'disciple-tools-contact-portal' )?></span>
             <hr/>
 
             <!-- replace with your custom content -->
@@ -73,9 +73,9 @@ class DT_Contact_Portal_Settings_Tile
      */
     public function dt_modal_help_text(){
         ?>
-        <div class="help-section" id="dt-contact-portal-help-text" style="display: none">
-            <h3><?php echo esc_html_x( "Custom Settings Section", 'Optional Documentation', 'dt-contact-portal' ) ?></h3>
-            <p><?php echo esc_html_x( "Add your own help information into this modal.", 'Optional Documentation', 'dt-contact-portal' ) ?></p>
+        <div class="help-section" id="disciple-tools-contact-portal-help-text" style="display: none">
+            <h3><?php echo esc_html_x( "Custom Settings Section", 'Optional Documentation', 'disciple-tools-contact-portal' ) ?></h3>
+            <p><?php echo esc_html_x( "Add your own help information into this modal.", 'Optional Documentation', 'disciple-tools-contact-portal' ) ?></p>
         </div>
         <?php
     }

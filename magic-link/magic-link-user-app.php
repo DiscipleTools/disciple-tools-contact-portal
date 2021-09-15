@@ -121,7 +121,7 @@ class DT_Contact_Portal_Magic_User_App extends DT_Magic_Url_Base {
                 'nonce' => wp_create_nonce( 'wp_rest' ),
                 'parts' => $this->parts,
                 'translations' => [
-                    'add' => __( 'Add Magic', 'dt-contact-portal' ),
+                    'add' => __( 'Add Magic', 'disciple-tools-contact-portal' ),
                 ],
             ]) ?>][0]
 

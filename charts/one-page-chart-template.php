@@ -8,7 +8,7 @@ if ( !defined( 'ABSPATH' ) ) { exit; } // Exit if accessed directly.
 
 class DT_Contact_Portal_Chart_Template extends DT_Metrics_Chart_Base
 {
-    public $base_slug = 'dt-contact-portal-metrics'; // lowercase
+    public $base_slug = 'disciple-tools-contact-portal-metrics'; // lowercase
     public $base_title = "Contact Portal Metrics";
 
     public $title = 'Template';
@@ -65,7 +65,7 @@ class DT_Contact_Portal_Chart_Template extends DT_Metrics_Chart_Base
                 ],
                 'translations' => [
                     "title" => $this->title,
-                    "Sample API Call" => __( "Sample API Call", 'dt-contact-portal' )
+                    "Sample API Call" => __( "Sample API Call", 'disciple-tools-contact-portal' )
                 ]
             ]
         );
