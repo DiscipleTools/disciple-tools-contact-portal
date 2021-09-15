@@ -1,30 +1,26 @@
 [![Build Status](https://travis-ci.com/DiscipleTools/disciple-tools-contact-portal.svg?branch=master)](https://travis-ci.com/DiscipleTools/disciple-tools-contact-portal)
 
-# Disciple Tools - Name
+# Disciple Tools - Porch
 
-Description Description Description Description Description Description Description
-Description Description Description Description Description Description Description
+Creates a self reporting portal for a contact.
 
 ## Purpose
 
-Purpose purpose purpose purpose purpose purpose purpose purpose purpose purpose purpose
-Purpose purpose purpose purpose purpose purpose purpose purpose purpose purpose purpose
+A contact, who is a disciple-maker, can be given a simplified private portal to track on contacts, baptisms, and
+generational group growth. They can access this private portal through a magic link and email address.
 
-Purpose purpose purpose purpose purpose purpose purpose purpose purpose purpose purpose
-Purpose purpose purpose purpose purpose purpose purpose purpose purpose purpose purpose
+Often, a disciple-maker part of a movement effort might not be ready for the power-user interface of Disciple Tools, but
+a coach or mentor wants them to begin tracking their activity in a simpler format.
 
 ## Usage
 
 #### Will Do
 
-- Item
-- Item
-- Item
+- Generates and distributes via email a magic link to the contacts record.
+- Facilitates simple contact creation and tracking.
+- Facilitates new group reporting and generation tree.
+- Allows for coaching checklist
 
-#### Will Not Do
-
-- Item
-- Item
 
 ## Requirements
 
