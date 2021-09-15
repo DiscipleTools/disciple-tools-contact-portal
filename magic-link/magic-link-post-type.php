@@ -9,10 +9,10 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
 
     public $magic = false;
     public $parts = false;
-    public $page_title = 'Magic';
-    public $root = "magic_app"; // @todo define the root of the url {yoursite}/root/type/key/action
-    public $type = 'magic_type'; // @todo define the type
-    public $post_type = 'contact_portal'; // @todo set the post type this magic link connects with.
+    public $page_title = 'Portal';
+    public $root = "portal_app";
+    public $type = 'c';
+    public $post_type = 'contacts';
     private $meta_key = '';
 
     private static $_instance = null;
@@ -53,19 +53,32 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         add_action( 'dt_blank_body', [ $this, 'body' ] ); // body for no post key
         add_filter( 'dt_magic_url_base_allowed_css', [ $this, 'dt_magic_url_base_allowed_css' ], 10, 1 );
         add_filter( 'dt_magic_url_base_allowed_js', [ $this, 'dt_magic_url_base_allowed_js' ], 10, 1 );
+        add_action( 'wp_enqueue_scripts', [ $this, 'scripts' ], 99 );
 
     }
 
     public function dt_magic_url_base_allowed_js( $allowed_js ) {
-        // @todo add or remove js files with this filter
-        // example: $allowed_js[] = 'your-enqueue-handle';
+        $allowed_js[] = 'portal-app-'.$this->type.'-js';
+        $allowed_js[] = 'jquery-touch-punch';
+        $allowed_js[] = 'mapbox-gl';
         return $allowed_js;
     }
 
     public function dt_magic_url_base_allowed_css( $allowed_css ) {
-        // @todo add or remove js files with this filter
-        // example: $allowed_css[] = 'your-enqueue-handle';
+        $allowed_css[] = 'portal-app-'.$this->type.'-css';
+        $allowed_css[] = 'mapbox-gl-css';
         return $allowed_css;
+    }
+
+    public function scripts() {
+        wp_register_script( 'jquery-touch-punch', '/wp-includes/js/jquery/jquery.ui.touch-punch.js' ); // @phpcs:ignore
+
+        wp_enqueue_script( 'portal-app-'.$this->type.'-js', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'portal-app.js', [ 'jquery' ],
+            filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'portal-app.js' ), true );
+
+        wp_enqueue_style( 'portal-app-'.$this->type.'-css', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'portal-app.css', [],
+            filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'portal-app.css' ) );
+
     }
 
     /**
@@ -73,9 +86,9 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
      */
     public function dt_details_additional_tiles( $tiles, $post_type = "" ) {
         if ( $post_type === $this->post_type ){
-            $tiles["dt_starters_magic_url"] = [
-                "label" => __( "Magic Url", 'disciple-tools-contact-portal' ),
-                "description" => "The Magic URL sets up a page accessible without authentication, only the link is needed. Useful for small applications liked to this record, like quick surveys or updates."
+            $tiles["dt_contact_portal"] = [
+                "label" => __( "Portal", 'disciple-tools-contact-portal' ),
+                "description" => "The Portal sets up a page accessible without authentication, only the link is needed. Useful for small applications liked to this record, like quick surveys or updates."
             ];
         }
         return $tiles;
@@ -83,7 +96,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
     public function dt_details_additional_section( $section, $post_type ) {
         // test if campaigns post type and campaigns_app_module enabled
         if ( $post_type === $this->post_type ) {
-            if ( 'dt_starters_magic_url' === $section ) {
+            if ( 'dt_contact_portal' === $section ) {
                 $record = DT_Posts::get_post( $post_type, get_the_ID() );
                 if ( isset( $record[$this->meta_key] )) {
                     $key = $record[$this->meta_key];
@@ -93,55 +106,32 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                 }
                 $link = DT_Magic_URL::get_link_url( $this->root, $this->type, $key )
                 ?>
-                <p>See help <img class="dt-icon" src="<?php echo esc_html( get_template_directory_uri() . '/dt-assets/images/help.svg' ) ?>"/> for description.</p>
-                <a class="button" href="<?php echo esc_html( $link ); ?>" target="_blank">Open magic link</a>
+                <a class="button" href="<?php echo esc_html( $link ); ?>" target="_blank">Open Link</a>
+                <a class="button" id="open-portal-activity" style="cursor:pointer;">Open Activity</a>
+                <script>
+                    jQuery(document).ready(function(){
+                        jQuery('#open-portal-activity').on('click', function(e){
+                            jQuery('#modal-full-title').empty().html(`Portal Activity`)
+                            jQuery('#modal-full-content').empty().html(`content`) // @todo add content logic
+
+                            jQuery('#modal-full').foundation('open')
+                        })
+                    })
+                </script>
                 <?php
             }
         }
     }
 
-    /**
-     * Writes custom styles to header
-     *
-     * @see DT_Magic_Url_Base()->header_style() for default state
-     * @todo remove if not needed
-     */
-    public function header_style(){
-        ?>
-        <style>
-            body {
-                background-color: white;
-                padding: 1em;
-            }
-        </style>
-        <?php
-    }
-
-    /**
-     * Writes javascript to the header
-     *
-     * @see DT_Magic_Url_Base()->header_javascript() for default state
-     * @todo remove if not needed
-     */
-    public function header_javascript(){
-        ?>
-        <script>
-            console.log('insert header_javascript')
-        </script>
-        <?php
-    }
 
     /**
      * Writes javascript to the footer
      *
      * @see DT_Magic_Url_Base()->footer_javascript() for default state
-     * @todo remove if not needed
      */
     public function footer_javascript(){
         ?>
         <script>
-            console.log('insert footer_javascript')
-
             let jsObject = [<?php echo json_encode([
                 'map_key' => DT_Mapbox_API::get_key(),
                 'root' => esc_url_raw( rest_url() ),
@@ -151,127 +141,13 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                     'add' => __( 'Add Magic', 'disciple-tools-contact-portal' ),
                 ],
             ]) ?>][0]
-
-            window.get_magic = () => {
-                jQuery.ajax({
-                    type: "GET",
-                    data: { action: 'get', parts: jsObject.parts },
-                    contentType: "application/json; charset=utf-8",
-                    dataType: "json",
-                    url: jsObject.root + jsObject.parts.root + '/v1/' + jsObject.parts.type,
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader('X-WP-Nonce', jsObject.nonce )
-                    }
-                })
-                .done(function(data){
-                    window.load_magic( data )
-                })
-                .fail(function(e) {
-                    console.log(e)
-                    jQuery('#error').html(e)
-                })
-            }
-            window.get_magic()
-
-            window.load_magic = ( data ) => {
-                let content = jQuery('#api-content')
-                let spinner = jQuery('.loading-spinner')
-
-                content.empty()
-                let html = ``
-                data.forEach(v=>{
-                    html += `
-                         <div class="cell">
-                             ${window.lodash.escape(v.name)}
-                         </div>
-                     `
-                })
-                content.html(html)
-
-                spinner.removeClass('active')
-
-            }
-
-            $('.dt_date_picker').datepicker({
-                constrainInput: false,
-                dateFormat: 'yy-mm-dd',
-                changeMonth: true,
-                changeYear: true,
-                yearRange: "1900:2050",
-            }).each(function() {
-                if (this.value && moment.unix(this.value).isValid()) {
-                    this.value = window.SHAREDFUNCTIONS.formatDate(this.value);
-                }
-            })
-
-
-            $('#submit-form').on("click", function (){
-                $(this).addClass("loading")
-                let start_date = $('#start_date').val()
-                let comment = $('#comment-input').val()
-                let update = {
-                    start_date,
-                    comment
-                }
-
-                window.makeRequest( "POST", jsObject.parts.type, { parts: jsObject.parts, update }, jsObject.parts.root + '/v1/' ).done(function(data){
-                    window.location.reload()
-                })
-                .fail(function(e) {
-                    console.log(e)
-                    jQuery('#error').html(e)
-                })
-            })
         </script>
         <?php
-        return true;
     }
 
     public function body(){
-        ?>
-        <div id="custom-style"></div>
-        <div id="wrapper">
-            <div class="grid-x">
-                <div class="cell center">
-                    <h2 id="title">Title</h2>
-                </div>
-            </div>
-            <hr>
-            <div id="content">
-                <h3>List From API</h3>
-                <div class="grid-x" id="api-content">
-                    <!-- javascript container -->
-                    <span class="loading-spinner active"></span>
-                </div>
-
-                <br>
-                <br>
-                <br>
-                <h3>Form</h3>
-                <div class="grid-x" id="form-content">
-                    <?php
-                    $post_id = $this->parts["post_id"];
-
-                    // get the past. Make sure to only display the needed pieces on the front end as this link does net require auth
-                    $post = DT_Posts::get_post( $this->post_type, $post_id, true, false );
-                    if ( is_wp_error( $post ) ){
-                        return;
-                    }
-                    $fields = DT_Posts::get_post_field_settings( $this->post_type );
-                    render_field_for_display( "start_date", $fields, $post );
-                    ?>
-
-                    <label style="width: 100%">
-                        <strong>Comment</strong>
-                        <textarea name="comment" id="comment-input"></textarea>
-                    </label>
-
-                    <button type="button" class="button loader" id="submit-form">Submit Update</button>
-                </div>
-            </div>
-
-        </div>
-        <?php
+        DT_Mapbox_API::geocoder_scripts();
+        require_once('portal-app-html.php');
     }
 
     /**

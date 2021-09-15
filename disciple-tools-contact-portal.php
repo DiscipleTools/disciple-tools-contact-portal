@@ -78,21 +78,18 @@ class DT_Contact_Portal {
         $is_rest = dt_is_rest();
 
         if ( strpos( dt_get_url_path(), 'metrics' ) !== false || ( $is_rest && strpos( dt_get_url_path(), 'disciple-tools-contact-portal-metrics' ) !== false ) ){
-            require_once( 'charts/charts-loader.php' );  // add custom charts to the metrics area
-        }
-
-        require_once( 'tile/custom-tile.php' ); // add custom tile
-        if ( 'settings' === dt_get_url_path() && ! $is_rest ) {
-            require_once( 'tile/settings-tile.php' ); // add custom settings page tile
+            require_once( 'charts/charts-loader.php' );
         }
 
         require_once( 'magic-link/magic-link-post-type.php' );
 
+        if ( is_admin() ) {
+            require_once( 'admin/admin-menu-and-tabs.php' ); // adds starter admin page and section for plugin
+        }
         $this->i18n();
-        if ( is_admin() ) { // adds links to the plugin description area in the plugin admin list.
+        if ( is_admin() ) {
             add_filter( 'plugin_row_meta', [ $this, 'plugin_description_links' ], 10, 4 );
         }
-
     }
 
     /**
@@ -103,8 +100,7 @@ class DT_Contact_Portal {
         if ( strpos( $plugin_file_name, basename( __FILE__ ) ) ) {
             // You can still use `array_unshift()` to add links at the beginning.
 
-            $links_array[] = '<a href="https://disciple.tools">Disciple.Tools Community</a>'; // @todo replace with your links.
-            // @todo add other links here
+            $links_array[] = '<a href="https://disciple.tools">Disciple.Tools Community</a>';
         }
 
         return $links_array;
