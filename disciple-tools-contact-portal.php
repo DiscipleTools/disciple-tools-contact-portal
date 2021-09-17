@@ -81,7 +81,7 @@ class DT_Contact_Portal {
             require_once( 'charts/charts-loader.php' );
         }
 
-        require_once( 'magic-link/magic-link-post-type.php' );
+        require_once( 'magic-link/portal-magic-link.php' );
 
         if ( is_admin() ) {
             require_once( 'admin/admin-menu-and-tabs.php' ); // adds starter admin page and section for plugin

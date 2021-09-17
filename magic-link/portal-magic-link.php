@@ -14,6 +14,14 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
     public $type = 'c';
     public $post_type = 'contacts';
     private $meta_key = '';
+    public $type_actions = [
+        '' => "Groups",
+        'groups' => "Groups",
+        'people' => "People",
+        'prayer' => "prayer",
+        'map' => "Map",
+        'pace' => "Pace",
+    ];
 
     private static $_instance = null;
     public static function instance() {
@@ -60,6 +68,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
     public function dt_magic_url_base_allowed_js( $allowed_js ) {
         $allowed_js[] = 'portal-app-'.$this->type.'-js';
         $allowed_js[] = 'jquery-touch-punch';
+        $allowed_js[] = 'portal-app-domenu-'.$this->type.'-js';
         $allowed_js[] = 'mapbox-gl';
         return $allowed_js;
     }
@@ -76,9 +85,18 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         wp_enqueue_script( 'portal-app-'.$this->type.'-js', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'portal-app.js', [ 'jquery' ],
             filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'portal-app.js' ), true );
 
+        wp_enqueue_script( 'portal-app-domenu-'.$this->type.'-js', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'jquery.domenu-0.0.1.js', [ 'jquery' ],
+            filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'jquery.domenu-0.0.1.js' ), true );
+
         wp_enqueue_style( 'portal-app-'.$this->type.'-css', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'portal-app.css', [],
             filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'portal-app.css' ) );
 
+    }
+
+    public function header_javascript(){
+        ?>
+        <script src="jquery.domenu-0.0.1.js"></script>
+        <?php
     }
 
     /**
