@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Disciple Tools - Contact Portal
+ * Plugin Name: Disciple.Tools - Contact Portal
  * Plugin URI: https://github.com/DiscipleTools/disciple-tools-contact-portal
  * Description: Disciple Tools - Contact Portal is intended to help developers and integrator jumpstart their extension of the Disciple Tools system.
  * Text Domain: disciple-tools-contact-portal
