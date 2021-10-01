@@ -2,7 +2,6 @@ body {
     background-color: white !important;
 }
 #wrapper {
-    max-width: 800px;
     margin: 0 auto;
 }
 #offCanvasLeft ul {

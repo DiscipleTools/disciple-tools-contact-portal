@@ -68,7 +68,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
     public function dt_magic_url_base_allowed_js( $allowed_js ) {
         $allowed_js[] = 'portal-app-'.$this->type.'-js';
         $allowed_js[] = 'jquery-touch-punch';
-        $allowed_js[] = 'portal-app-domenu-'.$this->type.'-js';
+        $allowed_js[] = 'portal-app-domenu-js';
         $allowed_js[] = 'mapbox-gl';
         return $allowed_js;
     }
@@ -76,6 +76,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
     public function dt_magic_url_base_allowed_css( $allowed_css ) {
         $allowed_css[] = 'portal-app-'.$this->type.'-css';
         $allowed_css[] = 'mapbox-gl-css';
+        $allowed_css[] = 'portal-app-domenu-css';
         return $allowed_css;
     }
 
@@ -85,8 +86,11 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         wp_enqueue_script( 'portal-app-'.$this->type.'-js', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'portal-app.js', [ 'jquery' ],
             filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'portal-app.js' ), true );
 
-        wp_enqueue_script( 'portal-app-domenu-'.$this->type.'-js', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'jquery.domenu-0.0.1.js', [ 'jquery' ],
-            filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'jquery.domenu-0.0.1.js' ), true );
+        wp_enqueue_script( 'portal-app-domenu-js', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'jquery.domenu-0.100.77.min.js', [ 'jquery' ],
+            filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'jquery.domenu-0.100.77.min.js' ), true );
+
+        wp_enqueue_style( 'portal-app-domenu-css', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'jquery.domenu-0.100.77.css', [],
+            filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'jquery.domenu-0.100.77.css' ) );
 
         wp_enqueue_style( 'portal-app-'.$this->type.'-css', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'portal-app.css', [],
             filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'portal-app.css' ) );
@@ -95,7 +99,27 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
 
     public function header_javascript(){
         ?>
-        <script src="jquery.domenu-0.0.1.js"></script>
+        <?php
+    }
+
+    /**
+     * Writes javascript to the footer
+     *
+     * @see DT_Magic_Url_Base()->footer_javascript() for default state
+     */
+    public function footer_javascript(){
+        ?>
+        <script>
+            let jsObject = [<?php echo json_encode([
+                'map_key' => DT_Mapbox_API::get_key(),
+                'root' => esc_url_raw( rest_url() ),
+                'nonce' => wp_create_nonce( 'wp_rest' ),
+                'parts' => $this->parts,
+                'translations' => [
+                    'add' => __( 'Add Magic', 'disciple-tools-contact-portal' ),
+                ],
+            ]) ?>][0]
+        </script>
         <?php
     }
 
@@ -142,26 +166,6 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
     }
 
 
-    /**
-     * Writes javascript to the footer
-     *
-     * @see DT_Magic_Url_Base()->footer_javascript() for default state
-     */
-    public function footer_javascript(){
-        ?>
-        <script>
-            let jsObject = [<?php echo json_encode([
-                'map_key' => DT_Mapbox_API::get_key(),
-                'root' => esc_url_raw( rest_url() ),
-                'nonce' => wp_create_nonce( 'wp_rest' ),
-                'parts' => $this->parts,
-                'translations' => [
-                    'add' => __( 'Add Magic', 'disciple-tools-contact-portal' ),
-                ],
-            ]) ?>][0]
-        </script>
-        <?php
-    }
 
     public function body(){
         DT_Mapbox_API::geocoder_scripts();
@@ -200,8 +204,20 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         );
     }
 
+    public function endpoint_get( WP_REST_Request $request ) {
+        $params = $request->get_params();
+        if ( ! isset( $params['parts'], $params['action'] ) ) {
+            return new WP_Error( __METHOD__, "Missing parameters", [ 'status' => 400 ] );
+        }
+        $data = [];
+        return json_encode( $data );
+    }
+
     public function update_record( WP_REST_Request $request ) {
         $params = $request->get_params();
+        if ( ! isset( $params['parts'], $params['action'] ) ) {
+            return new WP_Error( __METHOD__, "Missing parameters", [ 'status' => 400 ] );
+        }
         $params = dt_recursive_sanitize_array( $params );
 
         $post_id = $params["parts"]["post_id"]; //has been verified in verify_rest_endpoint_permissions_on_post()
@@ -215,35 +231,23 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
             $current_user->display_name = "Magic Link Submission";
         }
 
-        if ( isset( $params["update"]["comment"] ) && !empty( $params["update"]["comment"] ) ){
-            $update = DT_Posts::add_post_comment( $this->post_type, $post_id, $params["update"]["comment"], "comment", $args, false );
-            if ( is_wp_error( $update ) ){
-                return $update;
-            }
+        switch( $params['action'] ) {
+            case 'onItemAdded':
+                dt_write_log('onItemAdded');
+                return hash('sha256', random_bytes(100) );
+            case 'onItemRemoved':
+                dt_write_log('onItemRemoved');
+                dt_write_log($params['data']);
+                return true;
+            case 'onItemDrop':
+                dt_write_log('onItemDrop');
+                dt_write_log($params['data']);
+                return true;
         }
 
-        if ( isset( $params["update"]["start_date"] ) && !empty( $params["update"]["start_date"] ) ){
-            $update = DT_Posts::update_post( $this->post_type, $post_id, [ "start_date" => $params["update"]["start_date"] ], false, false );
-            if ( is_wp_error( $update ) ){
-                return $update;
-            }
-        }
-
-        return true;
+        return false;
     }
 
-    public function endpoint_get( WP_REST_Request $request ) {
-        $params = $request->get_params();
-        if ( ! isset( $params['parts'], $params['action'] ) ) {
-            return new WP_Error( __METHOD__, "Missing parameters", [ 'status' => 400 ] );
-        }
 
-        $data = [];
-
-        $data[] = [ 'name' => 'List item' ]; // @todo remove example
-        $data[] = [ 'name' => 'List item' ]; // @todo remove example
-
-        return $data;
-    }
 }
 DT_Contact_Portal_Magic_Link::instance();
