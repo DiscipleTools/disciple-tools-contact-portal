@@ -108,6 +108,11 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
      * @see DT_Magic_Url_Base()->footer_javascript() for default state
      */
     public function footer_javascript(){
+        $post_id = $this->parts["post_id"];
+        $post = DT_Posts::get_post( $this->post_type, $post_id, true, false );
+        if ( is_wp_error( $post ) ){
+            return;
+        }
         ?>
         <script>
             let jsObject = [<?php echo json_encode([
@@ -115,6 +120,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                 'root' => esc_url_raw( rest_url() ),
                 'nonce' => wp_create_nonce( 'wp_rest' ),
                 'parts' => $this->parts,
+                'post' => $post,
                 'translations' => [
                     'add' => __( 'Add Magic', 'disciple-tools-contact-portal' ),
                 ],
@@ -210,6 +216,22 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
             return new WP_Error( __METHOD__, "Missing parameters", [ 'status' => 400 ] );
         }
         $data = [];
+        $post_id = $params["parts"]["post_id"];
+        $list = DT_Posts::list_posts('groups', [
+            'fields_to_return' => [  ],
+            'coaches' => [ $post_id ]
+        ], false );
+
+        if ( ! empty( $list['posts'] ) ) {
+            foreach( $list['posts'] as $post_item ) {
+                $data[] = [
+                    'id' => $post_item['ID'],
+                    'title' => $post_item['post_title'],
+                ];
+            }
+        }
+
+        return $data;
         return json_encode( $data );
     }
 
@@ -221,27 +243,70 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         $params = dt_recursive_sanitize_array( $params );
 
         $post_id = $params["parts"]["post_id"]; //has been verified in verify_rest_endpoint_permissions_on_post()
+        $post = DT_Posts::get_post( $this->post_type, $post_id, true, false );
 
         $args = [];
         if ( !is_user_logged_in() ){
-            $args["comment_author"] = "Magic Link Submission";
+            $args["comment_author"] = $post['name'];
             wp_set_current_user( 0 );
             $current_user = wp_get_current_user();
-            $current_user->add_cap( "magic_link" );
-            $current_user->display_name = "Magic Link Submission";
+            $current_user->add_cap( "create_contact" );
+            $current_user->display_name = $post['name'];
         }
 
         switch( $params['action'] ) {
             case 'onItemAdded':
                 dt_write_log('onItemAdded');
-                return hash('sha256', random_bytes(100) );
+                $fields = [
+                    "title" => $params['data']['title'],
+                    "group_status" => "active",
+                    "group_type" => "group",
+                    "coaches" => [
+                        "values" => [
+                            [ "value" => $post_id ]
+                        ]
+                    ]
+                ];
+                $new_post = DT_Posts::create_post('groups', $fields, true, false );
+                if ( ! is_wp_error( $new_post ) ) {
+                    return $new_post['ID'];
+                }
+                else {
+                    dt_write_log($new_post);
+                    return false;
+                }
+
             case 'onItemRemoved':
                 dt_write_log('onItemRemoved');
-                dt_write_log($params['data']);
-                return true;
+                $deleted_post = Disciple_Tools_Posts::delete_post( 'groups', $params['data']['id'], false );
+                if ( ! is_wp_error( $deleted_post ) ) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
             case 'onItemDrop':
                 dt_write_log('onItemDrop');
-                dt_write_log($params['data']);
+                if( ! isset( $params['data']['new_parent'], $params['data']['self'], $params['data']['previous_parent'] ) ) {
+                    dt_write_log('Defaults not found');
+                    return false;
+                }
+
+                global $wpdb;
+                if ( 'domenu-0' !== $params['data']['previous_parent'] ) {
+                    $wpdb->query( $wpdb->prepare(
+                        "DELETE
+                                FROM $wpdb->p2p
+                                WHERE p2p_from = %s
+                                  AND p2p_to = %s
+                                  AND p2p_type = 'groups_to_groups'", $params['data']['self'], $params['data']['previous_parent'] ) );
+                }
+                // add parent child
+                $wpdb->query( $wpdb->prepare(
+                    "INSERT INTO $wpdb->p2p (p2p_from, p2p_to, p2p_type)
+                            VALUES (%s, %s, 'groups_to_groups');
+                    ", $params['data']['self'], $params['data']['new_parent'] ) );
+
                 return true;
         }
 

@@ -36,7 +36,7 @@ $fields = DT_Posts::get_post_field_settings( $this->post_type );
 </div>
 
 <div id="wrapper"></div>
-<div class="dd" id="domenu-0">
+<div class="dd" id="domenu-0" data-default-value="">
     <button class="dd-new-item">+</button>
     <li class="dd-item-blueprint" id="0" data-prev-parent="domenu-0">
         <button class="collapse" data-action="collapse" type="button" style="display: none;">–</button>
