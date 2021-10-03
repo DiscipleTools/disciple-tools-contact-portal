@@ -449,3 +449,7 @@ custom
     height: 3.5rem;
     font-size: 1.3rem;
 }
+
+.dd-list .dd-list {
+    border-left: 1px solid lightgray;
+}

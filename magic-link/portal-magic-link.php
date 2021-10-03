@@ -209,6 +209,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         }
 
         $tree = [];
+        $title_list = [];
         $pre_tree = [];
         $post_id = $params["parts"]["post_id"];
         $list = DT_Posts::list_posts('groups', [
@@ -226,8 +227,9 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                 if (  empty( $p['parent_groups'] ) ) {
                     $pre_tree[$p['ID']] = null;
                 }
+                $title_list[$p['ID']] = $p['name'];
             }
-            $tree = $this->parse_tree($pre_tree);
+            $tree = $this->parse_tree($pre_tree, $title_list);
         }
 
         if ( is_null( $tree) ) {
@@ -236,6 +238,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
 
         return [
             'parent_list' => $pre_tree,
+            'title_list' => $title_list,
             'tree' => $tree
         ];
     }
@@ -247,7 +250,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
      * @param null $root
      * @return array|null
      */
-    public function parse_tree($tree, $root = null) {
+    public function parse_tree($tree, $title_list, $root = null) {
         $return = array();
         # Traverse the tree and search for direct children of the root
         foreach($tree as $child => $parent) {
@@ -257,9 +260,10 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                 unset($tree[$child]);
                 # Append the child into result array and parse its children
                 $return[] = array(
+                    'id' => $child,
                     'title' => $child,
-                    'name' => $child,
-                    'children' => $this->parse_tree($tree, $child),
+                    'name' => $title_list[$child] ?? 'No Name',
+                    'children' => $this->parse_tree($tree, $title_list, $child),
                     '__domenu_params' => []
                 );
             }
@@ -328,9 +332,39 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                 if ( ! is_wp_error( $new_post ) ) {
                     return [
                         'ID' => $new_post['ID'],
-                        'title' => $new_post['post_title'],
+                        'title' => $new_post['title'],
                     ];
                 }
+                else {
+                    dt_write_log($new_post);
+                    return false;
+                }
+
+            case 'onItemAddChildItem':
+                dt_write_log('onItemAddChildItem');
+                $fields = [
+                    "title" => $params['data']['title'],
+                    "group_status" => "active",
+                    "group_type" => "group",
+                    "coaches" => [
+                        "values" => [
+                            [ "value" => $post_id ]
+                        ]
+                    ],
+                    "parent_group" => [
+                        "values" => [
+                            [ "value" => $params['data']['parent_id'] ]
+                        ]
+                    ]
+                ];
+                $new_post = DT_Posts::create_post('groups', $fields, true, false );
+                if ( ! is_wp_error( $new_post ) ) {
+                    return [
+                        'ID' => $new_post['ID'],
+                        'title' => $new_post['title'],
+                        'parent_id' => $new_post['parent_group'][0]['ID'] ?? $params['data']['parent_id'] ?? 0
+                    ];
+                 }
                 else {
                     dt_write_log($new_post);
                     return false;

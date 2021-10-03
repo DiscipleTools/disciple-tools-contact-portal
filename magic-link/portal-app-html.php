@@ -38,7 +38,7 @@ $fields = DT_Posts::get_post_field_settings( $this->post_type );
 <div id="wrapper"></div>
 <div class="dd" id="domenu-0">
     <button class="dd-new-item">+</button>
-    <li class="dd-item-blueprint" id="" data-pparent="domenu-0">
+    <li class="dd-item-blueprint" id="" data-prev_parent="domenu-0">
         <button class="collapse" data-action="collapse" type="button" style="display: none;">–</button>
         <button class="expand" data-action="expand" type="button" style="display: none;">+</button>
         <div class="dd-handle dd3-handle">&nbsp;</div>
@@ -47,12 +47,12 @@ $fields = DT_Posts::get_post_field_settings( $this->post_type );
             <div class="dd-button-container">
                 <button class="item-edit" >✎</button>
                 <button class="item-add">+</button>
-                <button class="item-remove">&times;</button>
+                <button class="item-remove" style="display:none;">&times;</button>
             </div>
             <div class="dd-edit-box" style="display: none;">
                 <input type="text" name="title" autocomplete="off" placeholder="Item"
                        data-placeholder="Any nice idea for the title?"
-                       data-default-value="Unsaved Group {?numeric.increment}">
+                       data-default-value="Saving New Group {?numeric.increment}">
 
             </div>
         </div>

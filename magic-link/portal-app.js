@@ -44,7 +44,9 @@ jQuery(document).ready(function() {
   }
 
   window.load_domenu = ( data ) => {
+
     window.new_inc = 0
+
     jQuery('#domenu-0').domenu({
       data: JSON.stringify( data.tree ),
       maxDepth: 500,
@@ -53,25 +55,6 @@ jQuery(document).ready(function() {
         support:     false, // Enable Select2 support
       }
     }).parseJson()
-      // .onItemAdded(function(e) {
-      //   console.log('onItemAdded')
-      //   jQuery('.loading-spinner').addClass('active')
-      //
-      //   inc++
-      //   let title = jsObject.post.title + ' Group ' + inc
-      //   window.setup_listeners()
-      //   window.post_item('onItemAdded', { title: title } ).done(function(new_data){
-      //     console.log(new_data)
-      //     jQuery('.loading-spinner').removeClass('active')
-      //     if ( new_data ) {
-      //       e[0].id = new_data
-      //       jQuery('#'+ new_data + ' .item-name').html( title )
-      //     } else {
-      //       jQuery('#'+ e[0].id ).html( 'Not created. Error.' )
-      //     }
-      //
-      //   })
-      // })
 
       .onCreateItem(function(e) {
         console.log('onCreateItem')
@@ -89,9 +72,9 @@ jQuery(document).ready(function() {
 
           if ( create_data ) {
             e[0].id = create_data.ID
-            e[0].dataset.prev_parent = 'loaded_parent'
+            e[0].dataset.prev_parent = 'domenu-0'
             // [0].jQuery35104409164252009192
-            jQuery('#'+ create_data.ID + ' .item-name').html( title )
+            jQuery('#'+ create_data.ID + ' .item-name').html( create_data.title )
           } else {
             e[0].id = create_data
             jQuery('#'+ e[0].id ).html( 'Not created. Error.' )
@@ -103,31 +86,38 @@ jQuery(document).ready(function() {
       })
       .onItemAddChildItem(function(e) {
         console.log('onItemAddChildItem')
+
         jQuery('.loading-spinner').addClass('active')
+        console.log( e )
 
         window.new_inc++
         let title = jsObject.post.title + ' Group ' + window.new_inc
-
         window.setup_listeners()
-        window.post_item('onItemAdded', { title: title } ).done(function(add_child_data){
+        window.post_item('onItemAddChildItem', { title: title, parent_id: 0 } ).done(function(add_child_data){
+
           console.log(add_child_data)
-          console.log( jQuery(this) )
-          jQuery('.loading-spinner').removeClass('active')
+          console.log( e[0].id )
+
           if ( add_child_data ) {
-            e[0].id = add_child_data
-            jQuery('#'+ add_child_data + ' .item-name').html( title )
+            e[0].id = add_child_data.ID
+            e[0].dataset.prev_parent = 'domenu-0'
+            jQuery('#'+ add_child_data.ID + ' .item-name').html( add_child_data.title )
           } else {
+            e[0].id = add_child_data
             jQuery('#'+ e[0].id ).html( 'Not created. Error.' )
           }
 
+          jQuery('.loading-spinner').removeClass('active')
+          console.log( e[0].id )
         })
       })
       .onItemRemoved(function(e) {
         if ( window.last_removed !== e[0].id ) {
+          console.log('onItemRemoved')
           jQuery('.loading-spinner').addClass('active')
+
           window.last_removed = e[0].id
 
-          console.log('onItemRemoved')
           window.post_item('onItemRemoved', { id: e[0].id} ).done(function(remove_data){
             jQuery('.loading-spinner').removeClass('active')
             if ( remove_data ) {
@@ -154,7 +144,7 @@ jQuery(document).ready(function() {
           let previous_parent = prev_parent_object.data('prev_parent')
           console.log(' - previous parent: ' + previous_parent )
 
-          prev_parent_object.data('prev_parent', new_parent ) // set previous
+          prev_parent_object.attr('data-prev_parent', new_parent ) // set previous
 
           if ( new_parent !== previous_parent ) {
             window.post_item('onItemDrop', { new_parent: new_parent, self: self, previous_parent: previous_parent } ).done(function(drop_data){
@@ -194,22 +184,31 @@ jQuery(document).ready(function() {
         // console.log(e)
       })
 
+
+
     jQuery.each( jQuery('#domenu-0 .item-name'), function(i,v){
+      // move and set the title to id
       jQuery(this).parent().parent().attr('id', jQuery(this).html())
+
     })
 
+    // set the previous parent data element
     jQuery.each( data.parent_list, function(ii,vv) {
       if ( vv !== null && vv !== "undefined") {
-        jQuery('#'+ii).data('pparent', vv )
-        console.log(jQuery('#'+ii).data('pparent'))
+        let target = jQuery('#'+ii)
+        if ( target.length > 0 ) {
+          target.attr('data-prev_parent', vv )
+        }
       }
     })
 
+    jQuery("li:not(:has(>ol)) .item-remove").show()
 
-    // jQuery.each( jQuery('#domenu-0 .dd-item'), function(ii,vv){
-    //   jQuery(this).data('prev_parent', jQuery(this).parent().parent().attr('id') )
-    // })
-
+    // set title
+    jQuery.each(jQuery('.item-name'), function(ix,vx) {
+      let old_title = jQuery(this).html()
+      jQuery(this).html(data.title_list[old_title])
+    })
   }
 
   window.setup_listeners = () => {
