@@ -1,4 +1,4 @@
-$(document).ready(function($) {
+jQuery(document).ready(function() {
   window.load_tree = () => {
     jQuery.ajax({
       type: "GET",
@@ -12,30 +12,9 @@ $(document).ready(function($) {
     })
       .done(function(data){
         console.log(data)
-        let list = $('ol.dd-list')
-        $.each(data, function(i,v){
-          list.append(`
-          <li class="dd-item" id="${v.id}" data-prev-parent="domenu-0">
-              <button class="collapse" data-action="collapse" type="button" style="display: none;">–</button>
-              <button class="expand" data-action="expand" type="button" style="display: none;">+</button>
-              <div class="dd-handle dd3-handle">&nbsp;</div>
-              <div class="dd3-content">
-                  <div class="item-name">${v.title}</div>
-                  <div class="dd-button-container">
-                      <button class="item-edit" >✎</button>
-                      <button class="item-add">+</button>
-                      <button class="item-remove">&times;</button>
-                  </div>
-                  <div class="dd-edit-box" style="display: none;">
-                      <input type="text" name="title" autocomplete="off" placeholder="Item"
-                             data-placeholder="${v.title}"
-                             data-default-value="${v.title}">
-                  </div>
-              </div>
-          </li>
-          `)
-        })
-        window.load_domenu()
+
+        window.load_domenu(data)
+
         jQuery('.loading-spinner').removeClass('active')
       })
       .fail(function(e) {
@@ -64,45 +43,93 @@ $(document).ready(function($) {
       })
   }
 
-  window.load_domenu = (  ) => {
-    let inc = 0
-    $('#domenu-0').domenu({
-      // data: data,
+  window.load_domenu = ( data ) => {
+    window.new_inc = 0
+    jQuery('#domenu-0').domenu({
+      data: JSON.stringify( data.tree ),
       maxDepth: 500,
       refuseConfirmDelay: 500, // does not delete immediately but requires a second click to confirm.
       select2:                {
         support:     false, // Enable Select2 support
       }
-    })
+    }).parseJson()
+      // .onItemAdded(function(e) {
+      //   console.log('onItemAdded')
+      //   jQuery('.loading-spinner').addClass('active')
+      //
+      //   inc++
+      //   let title = jsObject.post.title + ' Group ' + inc
+      //   window.setup_listeners()
+      //   window.post_item('onItemAdded', { title: title } ).done(function(new_data){
+      //     console.log(new_data)
+      //     jQuery('.loading-spinner').removeClass('active')
+      //     if ( new_data ) {
+      //       e[0].id = new_data
+      //       jQuery('#'+ new_data + ' .item-name').html( title )
+      //     } else {
+      //       jQuery('#'+ e[0].id ).html( 'Not created. Error.' )
+      //     }
+      //
+      //   })
+      // })
+
+      .onCreateItem(function(e) {
+        console.log('onCreateItem')
+
+        jQuery('.loading-spinner').addClass('active')
+        console.log( e )
+
+        window.new_inc++
+        let title = jsObject.post.title + ' Group ' + window.new_inc
+        window.setup_listeners()
+        window.post_item('onItemCreated', { title: title } ).done(function(create_data){
+
+          console.log(create_data)
+          console.log( e[0].id )
+
+          if ( create_data ) {
+            e[0].id = create_data.ID
+            e[0].dataset.prev_parent = 'loaded_parent'
+            // [0].jQuery35104409164252009192
+            jQuery('#'+ create_data.ID + ' .item-name').html( title )
+          } else {
+            e[0].id = create_data
+            jQuery('#'+ e[0].id ).html( 'Not created. Error.' )
+          }
+
+          jQuery('.loading-spinner').removeClass('active')
+          console.log( e[0].id )
+        })
+      })
       .onItemAddChildItem(function(e) {
         console.log('onItemAddChildItem')
-        console.log(e)
-      })
-      .onItemAdded(function(e) {
-        console.log('onItemAdded')
-        $('.loading-spinner').addClass('active')
-        inc++
-        let title = jsObject.post.title + ' Group ' + inc
+        jQuery('.loading-spinner').addClass('active')
+
+        window.new_inc++
+        let title = jsObject.post.title + ' Group ' + window.new_inc
+
         window.setup_listeners()
-        window.post_item('onItemAdded', { title: title } ).done(function(new_data){
-          $('.loading-spinner').removeClass('active')
-          if ( new_data ) {
-            e[0].id = new_data
-            $('#'+ new_data + ' .item-name').html( title )
+        window.post_item('onItemAdded', { title: title } ).done(function(add_child_data){
+          console.log(add_child_data)
+          console.log( jQuery(this) )
+          jQuery('.loading-spinner').removeClass('active')
+          if ( add_child_data ) {
+            e[0].id = add_child_data
+            jQuery('#'+ add_child_data + ' .item-name').html( title )
           } else {
-            $('#'+ e[0].id ).html( 'Not created. Error.' )
+            jQuery('#'+ e[0].id ).html( 'Not created. Error.' )
           }
 
         })
       })
       .onItemRemoved(function(e) {
         if ( window.last_removed !== e[0].id ) {
-          $('.loading-spinner').addClass('active')
+          jQuery('.loading-spinner').addClass('active')
           window.last_removed = e[0].id
 
           console.log('onItemRemoved')
           window.post_item('onItemRemoved', { id: e[0].id} ).done(function(remove_data){
-            $('.loading-spinner').removeClass('active')
+            jQuery('.loading-spinner').removeClass('active')
             if ( remove_data ) {
               console.log('success onItemRemoved')
             }
@@ -115,7 +142,7 @@ $(document).ready(function($) {
       .onItemDrop(function(e) {
         if ( typeof e.prevObject !== 'undefined' && typeof e[0].id !== 'undefined' ) { // runs twice on drop. with and without prevObject
           console.log('onItemDrop')
-          $('.loading-spinner').addClass('active')
+          jQuery('.loading-spinner').addClass('active')
 
           let new_parent = e[0].parentNode.parentNode.id
           let self = e[0].id
@@ -123,15 +150,15 @@ $(document).ready(function($) {
           console.log(' - new parent: '+ new_parent)
           console.log(' - self: '+ self)
 
-          let prev_parent_object = $('#'+e[0].id)
-          let previous_parent = prev_parent_object.data('prev-parent')
+          let prev_parent_object = jQuery('#'+e[0].id)
+          let previous_parent = prev_parent_object.data('prev_parent')
           console.log(' - previous parent: ' + previous_parent )
 
-          prev_parent_object.data('prev-parent', new_parent ) // set previous
+          prev_parent_object.data('prev_parent', new_parent ) // set previous
 
           if ( new_parent !== previous_parent ) {
             window.post_item('onItemDrop', { new_parent: new_parent, self: self, previous_parent: previous_parent } ).done(function(drop_data){
-              $('.loading-spinner').removeClass('active')
+              jQuery('.loading-spinner').removeClass('active')
               if ( drop_data ) {
                 console.log('success onItemDrop')
               }
@@ -147,7 +174,7 @@ $(document).ready(function($) {
           console.log('onItemSetParent')
           console.log(' - has children: ' + e[0].id)
 
-          $('#' + e[0].id + ' button.item-remove').hide();
+          jQuery('#' + e[0].id + ' button.item-remove').hide();
         }
       })
       .onItemUnsetParent(function(e) {
@@ -155,7 +182,7 @@ $(document).ready(function($) {
           console.log('onItemUnsetParent')
           console.log(' - has no children: '+ e[0].id)
 
-          $('#' + e[0].id + ' button.item-remove').show();
+          jQuery('#' + e[0].id + ' button.item-remove').show();
         }
       })
       .onItemExpanded(function(e) {
@@ -167,31 +194,32 @@ $(document).ready(function($) {
         // console.log(e)
       })
 
-      // .onItemDrag(function(e) {
-      //   console.log('onItemDrag')
-      //   console.log(e)
-      // })
-      // .onCreateItem(function(e) {
-      //   console.log('onCreateItem')
-      //   // console.log(e)
-      // })
+    jQuery.each( jQuery('#domenu-0 .item-name'), function(i,v){
+      jQuery(this).parent().parent().attr('id', jQuery(this).html())
+    })
 
-      // .on(['onItemCollapsed', 'onItemExpanded'], function(a, b, c) {
-      //   console.log('listener fired .on[\'onItemCollapsed\', \'onItemExpanded\']')
-      // });
+    jQuery.each( data.parent_list, function(ii,vv) {
+      if ( vv !== null && vv !== "undefined") {
+        jQuery('#'+ii).data('pparent', vv )
+        console.log(jQuery('#'+ii).data('pparent'))
+      }
+    })
 
 
+    // jQuery.each( jQuery('#domenu-0 .dd-item'), function(ii,vv){
+    //   jQuery(this).data('prev_parent', jQuery(this).parent().parent().attr('id') )
+    // })
 
   }
 
   window.setup_listeners = () => {
-    $('#domenu-0 .item-edit').unbind().on('click', function(e) {
+    jQuery('#domenu-0 .item-edit').unbind().on('click', function(e) {
+      // console.log(e)
 
       console.log('clicked on.item-edit')
-      // console.log(e)
+      // @todo open edit modal
 
     })
   }
-
 
 });

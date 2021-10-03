@@ -42,7 +42,6 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         add_filter( 'dt_details_additional_tiles', [ $this, 'dt_details_additional_tiles' ], 10, 2 );
         add_action( 'rest_api_init', [ $this, 'add_endpoints' ] );
 
-
         /**
          * tests if other URL
          */
@@ -62,7 +61,6 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         add_filter( 'dt_magic_url_base_allowed_css', [ $this, 'dt_magic_url_base_allowed_css' ], 10, 1 );
         add_filter( 'dt_magic_url_base_allowed_js', [ $this, 'dt_magic_url_base_allowed_js' ], 10, 1 );
         add_action( 'wp_enqueue_scripts', [ $this, 'scripts' ], 99 );
-
     }
 
     public function dt_magic_url_base_allowed_js( $allowed_js ) {
@@ -86,20 +84,15 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         wp_enqueue_script( 'portal-app-'.$this->type.'-js', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'portal-app.js', [ 'jquery' ],
             filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'portal-app.js' ), true );
 
+        wp_enqueue_style( 'portal-app-'.$this->type.'-css', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'portal-app.css', [],
+            filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'portal-app.css' ) );
+
         wp_enqueue_script( 'portal-app-domenu-js', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'jquery.domenu-0.100.77.min.js', [ 'jquery' ],
             filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'jquery.domenu-0.100.77.min.js' ), true );
 
         wp_enqueue_style( 'portal-app-domenu-css', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'jquery.domenu-0.100.77.css', [],
             filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'jquery.domenu-0.100.77.css' ) );
 
-        wp_enqueue_style( 'portal-app-'.$this->type.'-css', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'portal-app.css', [],
-            filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'portal-app.css' ) );
-
-    }
-
-    public function header_javascript(){
-        ?>
-        <?php
     }
 
     /**
@@ -141,6 +134,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         }
         return $tiles;
     }
+
     public function dt_details_additional_section( $section, $post_type ) {
         // test if campaigns post type and campaigns_app_module enabled
         if ( $post_type === $this->post_type ) {
@@ -170,8 +164,6 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
             }
         }
     }
-
-
 
     public function body(){
         DT_Mapbox_API::geocoder_scripts();
@@ -215,7 +207,9 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         if ( ! isset( $params['parts'], $params['action'] ) ) {
             return new WP_Error( __METHOD__, "Missing parameters", [ 'status' => 400 ] );
         }
-        $data = [];
+
+        $tree = [];
+        $pre_tree = [];
         $post_id = $params["parts"]["post_id"];
         $list = DT_Posts::list_posts('groups', [
             'fields_to_return' => [  ],
@@ -223,17 +217,56 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         ], false );
 
         if ( ! empty( $list['posts'] ) ) {
-            foreach( $list['posts'] as $post_item ) {
-                $data[] = [
-                    'id' => $post_item['ID'],
-                    'title' => $post_item['post_title'],
-                ];
+            foreach( $list['posts'] as $p ) {
+                if ( isset( $p['child_groups'] ) && ! empty( $p['child_groups'] ) ) {
+                    foreach( $p['child_groups'] as $children ) {
+                        $pre_tree[$children['ID']] = $p['ID'];
+                    }
+                }
+                if (  empty( $p['parent_groups'] ) ) {
+                    $pre_tree[$p['ID']] = null;
+                }
             }
+            $tree = $this->parse_tree($pre_tree);
         }
 
-        return $data;
-        return json_encode( $data );
+        if ( is_null( $tree) ) {
+            $tree = [];
+        }
+
+        return [
+            'parent_list' => $pre_tree,
+            'tree' => $tree
+        ];
     }
+
+    /**
+     * @see https://stackoverflow.com/questions/2915748/convert-a-series-of-parent-child-relationships-into-a-hierarchical-tree
+     *
+     * @param $tree
+     * @param null $root
+     * @return array|null
+     */
+    public function parse_tree($tree, $root = null) {
+        $return = array();
+        # Traverse the tree and search for direct children of the root
+        foreach($tree as $child => $parent) {
+            # A direct child is found
+            if($parent == $root) {
+                # Remove item from tree (we don't need to traverse this again)
+                unset($tree[$child]);
+                # Append the child into result array and parse its children
+                $return[] = array(
+                    'title' => $child,
+                    'name' => $child,
+                    'children' => $this->parse_tree($tree, $child),
+                    '__domenu_params' => []
+                );
+            }
+        }
+        return empty($return) ? null : $return;
+    }
+
 
     public function update_record( WP_REST_Request $request ) {
         $params = $request->get_params();
@@ -269,7 +302,34 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                 ];
                 $new_post = DT_Posts::create_post('groups', $fields, true, false );
                 if ( ! is_wp_error( $new_post ) ) {
-                    return $new_post['ID'];
+                    return [
+                        'ID' => $new_post['ID'],
+                        'title' => $new_post['post_title'],
+                    ];
+                }
+                else {
+                    dt_write_log($new_post);
+                    return false;
+                }
+
+            case 'onItemCreated':
+                dt_write_log('onItemCreated');
+                $fields = [
+                    "title" => $params['data']['title'],
+                    "group_status" => "active",
+                    "group_type" => "group",
+                    "coaches" => [
+                        "values" => [
+                            [ "value" => $post_id ]
+                        ]
+                    ]
+                ];
+                $new_post = DT_Posts::create_post('groups', $fields, true, false );
+                if ( ! is_wp_error( $new_post ) ) {
+                    return [
+                        'ID' => $new_post['ID'],
+                        'title' => $new_post['post_title'],
+                    ];
                 }
                 else {
                     dt_write_log($new_post);
@@ -306,13 +366,9 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                     "INSERT INTO $wpdb->p2p (p2p_from, p2p_to, p2p_type)
                             VALUES (%s, %s, 'groups_to_groups');
                     ", $params['data']['self'], $params['data']['new_parent'] ) );
-
                 return true;
         }
-
         return false;
     }
-
-
 }
 DT_Contact_Portal_Magic_Link::instance();

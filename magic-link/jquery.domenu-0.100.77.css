@@ -84,21 +84,35 @@
   margin:     0;
   padding:    0;
   list-style: none;
-    min-width: 400px;
+    width: 400px;
+}
+@media screen and (max-width: 768px) {
+    .dd > .dd-list {
+        width: 100%;
+        min-width: 768px;
+    }
+    .dd-list {
+        width: 100%;
+        min-width: 768px;
+    }
 }
 @media screen and (max-width: 375px) {
     .dd > .dd-list {
-        min-width: 375px;
+        width: 100%;
+        min-width: 768px;
     }
     .dd-list {
-        min-width: 375px;
+        width: 100%;
+        min-width: 768px;
     }
 }
 @media screen and (max-width: 320px) {
     .dd > .dd-list {
+        width: 100%;
         min-width: 320px;
     }
     .dd-list {
+        width: 100%;
         min-width: 320px;
     }
 }
