@@ -59,58 +59,57 @@ jQuery(document).ready(function() {
       .onCreateItem(function(e) {
         console.log('onCreateItem')
 
-        jQuery('.loading-spinner').addClass('active')
-        console.log( e )
-
-        window.new_inc++
-        let title = jsObject.post.title + ' Group ' + window.new_inc
-        window.setup_listeners()
-        window.post_item('onItemCreated', { title: title } ).done(function(create_data){
-
-          console.log(create_data)
-          console.log( e[0].id )
-
-          if ( create_data ) {
-            e[0].id = create_data.ID
-            e[0].dataset.prev_parent = 'domenu-0'
-            // [0].jQuery35104409164252009192
-            jQuery('#'+ create_data.ID + ' .item-name').html( create_data.title )
-          } else {
-            e[0].id = create_data
-            jQuery('#'+ e[0].id ).html( 'Not created. Error.' )
-          }
-
-          jQuery('.loading-spinner').removeClass('active')
-          console.log( e[0].id )
-        })
+        // jQuery('.loading-spinner').addClass('active')
+        // console.log( e )
+        //
+        // window.new_inc++
+        // let title = jsObject.post.title + ' Group ' + window.new_inc
+        // window.setup_listeners()
+        // window.post_item('onItemCreated', { title: title } ).done(function(create_data){
+        //
+        //   // console.log(create_data)
+        //   // console.log( e[0].id )
+        //
+        //   if ( create_data ) {
+        //     e[0].id = create_data.ID
+        //     e[0].dataset.prev_parent = 'domenu-0'
+        //     jQuery('#'+ create_data.ID + ' .item-name').html( create_data.title )
+        //   } else {
+        //     console.log(create_data)
+        //   }
+        //
+        //   jQuery('.loading-spinner').removeClass('active')
+        //   console.log( e[0].id )
+        // })
       })
-      .onItemAddChildItem(function(e) {
-        console.log('onItemAddChildItem')
+      // .onItemAddChildItem(function(e) {
+      //   console.log('onItemAddChildItem')
 
-        jQuery('.loading-spinner').addClass('active')
-        console.log( e )
-
-        window.new_inc++
-        let title = jsObject.post.title + ' Group ' + window.new_inc
-        window.setup_listeners()
-        window.post_item('onItemAddChildItem', { title: title, parent_id: 0 } ).done(function(add_child_data){
-
-          console.log(add_child_data)
-          console.log( e[0].id )
-
-          if ( add_child_data ) {
-            e[0].id = add_child_data.ID
-            e[0].dataset.prev_parent = 'domenu-0'
-            jQuery('#'+ add_child_data.ID + ' .item-name').html( add_child_data.title )
-          } else {
-            e[0].id = add_child_data
-            jQuery('#'+ e[0].id ).html( 'Not created. Error.' )
-          }
-
-          jQuery('.loading-spinner').removeClass('active')
-          console.log( e[0].id )
-        })
-      })
+        // jQuery('.loading-spinner').addClass('active')
+        // console.log( e )
+        //
+        //
+        // window.new_inc++
+        // let title = jsObject.post.title + ' Group ' + window.new_inc
+        // window.setup_listeners()
+        // window.post_item('onItemAddChildItem', { title: title, parent_id: 0 } ).done(function(add_child_data){
+        //
+        //   console.log(add_child_data)
+        //   console.log( e[0].id )
+        //
+        //   if ( add_child_data ) {
+        //     e[0].id = add_child_data.ID
+        //     e[0].dataset.prev_parent = 'domenu-0'
+        //     jQuery('#'+ add_child_data.ID + ' .item-name').html( add_child_data.title )
+        //   } else {
+        //     e[0].id = add_child_data
+        //     jQuery('#'+ e[0].id ).html( 'Not created. Error.' )
+        //   }
+        //
+        //   jQuery('.loading-spinner').removeClass('active')
+        //   console.log( e[0].id )
+        // })
+      // })
       .onItemRemoved(function(e) {
         if ( window.last_removed !== e[0].id ) {
           console.log('onItemRemoved')
@@ -130,11 +129,44 @@ jQuery(document).ready(function() {
         }
       })
       .onItemDrop(function(e) {
-        if ( typeof e.prevObject !== 'undefined' && typeof e[0].id !== 'undefined' ) { // runs twice on drop. with and without prevObject
-          console.log('onItemDrop')
-          jQuery('.loading-spinner').addClass('active')
+        // if ( typeof e.prevObject !== 'undefined' && typeof e[0].id !== 'undefined' ) { // runs twice on drop. with and without prevObject
+        //   console.log('onItemDrop')
+        //   jQuery('.loading-spinner').addClass('active')
+        //
+        //   let new_parent = e[0].parentNode.parentNode.id
+        //   let self = e[0].id
+        //
+        //   console.log(' - new parent: '+ new_parent)
+        //   console.log(' - self: '+ self)
+        //
+        //   let prev_parent_object = jQuery('#'+e[0].id)
+        //   let previous_parent = prev_parent_object.data('prev_parent')
+        //   console.log(' - previous parent: ' + previous_parent )
+        //
+        //   prev_parent_object.attr('data-prev_parent', new_parent ) // set previous
+        //
+        //   if ( new_parent !== previous_parent ) {
+        //     window.post_item('onItemDrop', { new_parent: new_parent, self: self, previous_parent: previous_parent } ).done(function(drop_data){
+        //       jQuery('.loading-spinner').removeClass('active')
+        //       if ( drop_data ) {
+        //         console.log('success onItemDrop')
+        //       }
+        //       else {
+        //         console.log('did not edit item')
+        //       }
+        //     })
+        //   }
+        // }
+      })
+      .onItemSetParent(function(e) {
+        if (typeof e[0] !== 'undefined' ) {
+          console.log('onItemSetParent')
+          console.log(' - has children: ' + e[0].id)
 
-          let new_parent = e[0].parentNode.parentNode.id
+          jQuery('.loading-spinner').addClass('active')
+          console.log( e )
+
+          let new_parent = e[0].id //e[0].parentNode.parentNode.id
           let self = e[0].id
 
           console.log(' - new parent: '+ new_parent)
@@ -157,14 +189,8 @@ jQuery(document).ready(function() {
               }
             })
           }
-        }
-      })
-      .onItemSetParent(function(e) {
-        if (typeof e[0] !== 'undefined' ) {
-          console.log('onItemSetParent')
-          console.log(' - has children: ' + e[0].id)
 
-          jQuery('#' + e[0].id + ' button.item-remove').hide();
+          jQuery('#' + e[0].id + ' button.item-remove:first').hide();
         }
       })
       .onItemUnsetParent(function(e) {
@@ -172,7 +198,7 @@ jQuery(document).ready(function() {
           console.log('onItemUnsetParent')
           console.log(' - has no children: '+ e[0].id)
 
-          jQuery('#' + e[0].id + ' button.item-remove').show();
+          jQuery('#' + e[0].id + ' button.item-remove:first').show();
         }
       })
       .onItemExpanded(function(e) {
@@ -183,8 +209,6 @@ jQuery(document).ready(function() {
         console.log('onItemCollapsed')
         // console.log(e)
       })
-
-
 
     jQuery.each( jQuery('#domenu-0 .item-name'), function(i,v){
       // move and set the title to id
@@ -209,6 +233,9 @@ jQuery(document).ready(function() {
       let old_title = jQuery(this).html()
       jQuery(this).html(data.title_list[old_title])
     })
+
+
+
   }
 
   window.setup_listeners = () => {
