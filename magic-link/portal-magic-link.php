@@ -15,7 +15,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
     public $post_type = 'contacts';
     private $meta_key = '';
     public $type_actions = [
-        '' => "Groups",
+        '' => "Home",
         'groups' => "Groups",
         'people' => "People",
         'prayer' => "prayer",
@@ -57,7 +57,23 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         }
 
         // load if valid url
-        add_action( 'dt_blank_body', [ $this, 'body' ] ); // body for no post key
+        if ( 'groups' === $this->parts['action'] ) {
+            add_action( 'dt_blank_body', [ $this, 'groups_body' ] );
+        }
+        else if ( 'people' === $this->parts['action'] ) {
+            add_action( 'dt_blank_body', [ $this, 'people_body' ] );
+        }
+        else if ( 'map' === $this->parts['action'] ) {
+            add_action( 'dt_blank_body', [ $this, 'map_body' ] );
+        }
+        else if ( '' === $this->parts['action'] ) {
+            add_action( 'dt_blank_body', [ $this, 'home_body' ] );
+        } else {
+            add_action( 'dt_blank_body', [ $this, 'home_body' ] );
+        }
+
+        // load if valid url
+
         add_filter( 'dt_magic_url_base_allowed_css', [ $this, 'dt_magic_url_base_allowed_css' ], 10, 1 );
         add_filter( 'dt_magic_url_base_allowed_js', [ $this, 'dt_magic_url_base_allowed_js' ], 10, 1 );
         add_action( 'wp_enqueue_scripts', [ $this, 'scripts' ], 99 );
@@ -165,9 +181,24 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         }
     }
 
-    public function body(){
+    public function home_body(){
         DT_Mapbox_API::geocoder_scripts();
-        require_once('portal-app-html.php');
+        require_once('portal-home-html.php');
+    }
+
+    public function groups_body(){
+        DT_Mapbox_API::geocoder_scripts();
+        require_once('portal-groups-html.php');
+    }
+
+    public function people_body(){
+        DT_Mapbox_API::geocoder_scripts();
+        require_once('portal-people-html.php');
+    }
+
+    public function map_body(){
+        DT_Mapbox_API::geocoder_scripts();
+        require_once('portal-map-html.php');
     }
 
     /**
@@ -365,6 +396,49 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                         'parent_id' => $new_post['parent_group'][0]['ID'] ?? $params['data']['parent_id'] ?? 0
                     ];
                  }
+                else {
+                    dt_write_log($new_post);
+                    return false;
+                }
+
+            case 'create_group':
+                dt_write_log('create_group');
+
+                $inc = $params['data']['inc'];
+                $temp_id = $params['data']['temp_id'];
+                $parent_id = $params['data']['parent_id'];
+
+
+
+                $fields = [
+                    "title" => $post['name'] . ' Group ' . $inc,
+                    "group_status" => "active",
+                    "group_type" => "group",
+                    "coaches" => [
+                        "values" => [
+                            [ "value" => $post_id ]
+                        ]
+                    ],
+                ];
+
+                if ( 'domenu-0' !== $parent_id && is_numeric( $parent_id ) ) {
+                    $fields["parent_groups"] = [
+                        "values" => [
+                            [ "value" => $parent_id ]
+                        ]
+                    ];
+                }
+
+
+                $new_post = DT_Posts::create_post('groups', $fields, true, false );
+                if ( ! is_wp_error( $new_post ) ) {
+                    return [
+                        'id' => $new_post['ID'],
+                        'title' => $new_post['name'],
+                        'prev_parent' => $parent_id,
+                        'temp_id' => $temp_id,
+                    ];
+                }
                 else {
                     dt_write_log($new_post);
                     return false;

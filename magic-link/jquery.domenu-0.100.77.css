@@ -99,11 +99,11 @@
 @media screen and (max-width: 375px) {
     .dd > .dd-list {
         width: 100%;
-        min-width: 768px;
+        min-width: 375px;
     }
     .dd-list {
         width: 100%;
-        min-width: 768px;
+        min-width: 375px;
     }
 }
 @media screen and (max-width: 320px) {
@@ -198,7 +198,13 @@
 /* @since > 0.13.29 */
 .dd-item .item-remove,
 .dd-item .item-remove-confirm,
-.dd-item .item-add {
+.dd-item .item-add  {
+  outline: none;
+}
+
+.dd-item .item-remove,
+.dd-item .item-remove-confirm,
+.dd-item .item-add-child  {
   outline: none;
 }
 
@@ -221,7 +227,22 @@
     font-size: 1.3rem;
 }
 
-.dd-item .dd-button-container .item-add:active {
+.dd-item .dd-button-container .item-add-child {
+  background-color: #55b3ff;
+  border-color:     #376f9c;
+  color:            #ffffff;
+  text-shadow:      0 1px 0 #2b77b5;
+  box-shadow:       inset 0 1px 0 #cfe9ff;
+    padding: 0 .5rem;
+    height: 3.5rem;
+    font-size: 1.3rem;
+}
+
+.dd-item .dd-button-container .item-add:active  {
+  box-shadow: inset 0 1px 3px #376f9c;
+}
+
+.dd-item .dd-button-container .item-add-child:active  {
   box-shadow: inset 0 1px 3px #376f9c;
 }
 
@@ -242,11 +263,8 @@
 }
 
 .dd-item .dd-button-container .item-remove-confirm {
-
   background-color: #ffa155;
-
   transition:       background-color 0.35s;
-
   border-color:     #ad7232;
 }
 
