@@ -43,6 +43,43 @@ jQuery(document).ready(function() {
       })
   }
 
+  window.create_group = () => {
+    console.log('create_group')
+    jQuery('.loading-spinner').addClass('active')
+
+    console.log( window.new_item )
+
+    window.post_item('create_group', window.new_item )
+      .done(function(response){
+        console.log(response)
+        if ( response ) {
+
+          jQuery('#'+ response.temp_id).attr('id', response.id )
+          jQuery('#'+response.id).attr('data-prev_parent', response.prev_parent )
+          jQuery('#'+response.id + ' .item-name:first').html( response.title )
+          jQuery('#'+response.id + ' .item-add:first').on('click', function(e) {
+            window.create_group()
+          })
+          jQuery('#'+response.id + ' .item-edit:first').on('click', function(e) {
+            window.edit_modal({ id: response.id } )
+          })
+
+        } else {
+          console.log(response)
+        }
+
+        jQuery('.loading-spinner').removeClass('active')
+      })
+  }
+
+  window.edit_modal = ( data ) => {
+    console.log( jQuery(this).target )
+
+    // @todo open edit modal
+    jQuery('#edit-modal').foundation('open')
+
+  }
+
   window.load_domenu = ( data ) => {
 
     window.new_inc = 0
@@ -58,67 +95,21 @@ jQuery(document).ready(function() {
 
       .onCreateItem(function(e) {
         console.log('onCreateItem')
+
         window.new_inc++
-
-        let new_id = 'new_id_'+window.new_inc
-        console.log( e.attr('id', 'new_id_'+window.new_inc) )
-
-        // window.create_group( new_id )
 
         window.new_item = {
           inc: window.new_inc,
-          temp_id: new_id,
+          temp_id: 'new_id_'+window.new_inc,
           parent_id: 'domenu-0'
         }
 
-
-        // jQuery('.loading-spinner').addClass('active')
-        // console.log( e )
-        //
-        // window.new_inc++
-        // let title = jsObject.post.title + ' Group ' + window.new_inc
-        // window.post_item('onItemCreated', { title: title } ).done(function(create_data){
-        //
-        //   if ( create_data ) {
-        //     e[0].id = create_data.ID
-        //     e[0].dataset.prev_parent = 'domenu-0'
-        //     jQuery('#'+ create_data.ID + ' .item-name').html( create_data.title )
-        //   } else {
-        //     console.log(create_data)
-        //   }
-        //
-        //   jQuery('.loading-spinner').removeClass('active')
-        //   console.log( e[0].id )
-        // })
-
+        e.attr('id', 'new_id_'+window.new_inc )
       })
       .onItemAddChildItem(function(e) {
         console.log('onItemAddChildItem')
-
         console.log( e[0].id )
         window.new_item.parent_id = e[0].id
-
-
-
-        // jQuery('.loading-spinner').addClass('active')
-        //
-        // window.new_inc++
-        // let title = jsObject.post.title + ' Group ' + window.new_inc
-        // window.post_item('onItemAddChildItem', { title: title, parent_id: 0 } ).done(function(add_child_data){
-        //
-        //   if ( add_child_data ) {
-        //     e[0].id = add_child_data.ID
-        //     e[0].dataset.prev_parent = 'domenu-0'
-        //     jQuery('#'+ add_child_data.ID + ' .item-name').html( add_child_data.title )
-        //   } else {
-        //     e[0].id = add_child_data
-        //     jQuery('#'+ e[0].id ).html( 'Not created. Error.' )
-        //   }
-        //
-        //   jQuery('.loading-spinner').removeClass('active')
-        // })
-
-
       })
       .onItemRemoved(function(e) {
         if ( window.last_removed !== e[0].id ) {
@@ -173,34 +164,6 @@ jQuery(document).ready(function() {
         if (typeof e[0] !== 'undefined' ) {
           console.log('onItemSetParent')
           console.log(' - has children: ' + e[0].id)
-
-          // jQuery('.loading-spinner').addClass('active')
-          // console.log( e )
-          //
-          // let new_parent = e[0].id //e[0].parentNode.parentNode.id
-          // let self = e[0].id
-          //
-          // console.log(' - new parent: '+ new_parent)
-          // console.log(' - self: '+ self)
-          //
-          // let prev_parent_object = jQuery('#'+e[0].id)
-          // let previous_parent = prev_parent_object.data('prev_parent')
-          // console.log(' - previous parent: ' + previous_parent )
-          //
-          // prev_parent_object.attr('data-prev_parent', new_parent ) // set previous
-          //
-          // if ( new_parent !== previous_parent ) {
-          //   window.post_item('onItemDrop', { new_parent: new_parent, self: self, previous_parent: previous_parent } ).done(function(drop_data){
-          //     jQuery('.loading-spinner').removeClass('active')
-          //     if ( drop_data ) {
-          //       console.log('success onItemDrop')
-          //     }
-          //     else {
-          //       console.log('did not edit item')
-          //     }
-          //   })
-          // }
-
           jQuery('#' + e[0].id + ' button.item-remove:first').hide();
         }
       })
@@ -208,7 +171,6 @@ jQuery(document).ready(function() {
         if (typeof e[0] !== 'undefined' ) {
           console.log('onItemUnsetParent')
           console.log(' - has no children: '+ e[0].id)
-
           jQuery('#' + e[0].id + ' button.item-remove:first').show();
         }
       })
@@ -228,57 +190,25 @@ jQuery(document).ready(function() {
         }
       }
     })
+    // show delete for last item
     jQuery("li:not(:has(>ol)) .item-remove").show()
     // set title
     jQuery.each(jQuery('.item-name'), function(ix,vx) {
       let old_title = jQuery(this).html()
       jQuery(this).html(data.title_list[old_title])
     })
-
+    // set listener for add submenu item
     jQuery('#domenu-0 .item-add').on('click', function(e) {
       window.create_group()
     })
+    // set listener for edit button
     jQuery('#domenu-0 .item-edit').on('click', function(e) {
-      window.edit_modal({ id: e.attr('id')} )
+      console.log(e) // @todo how do i get the id of the item clicked?
+      window.edit_modal()
     })
+    // add listener to top add item box
     jQuery('.dd-new-item').on('click', function() {
-      
+      window.create_group()
     })
   }
-
-  window.create_group = () => {
-    jQuery('.loading-spinner').addClass('active')
-
-    console.log( window.new_item )
-
-    window.post_item('create_group', window.new_item )
-      .done(function(response){
-
-      if ( response ) {
-
-        jQuery('#'+ response.temp_id).attr('id', response.id )
-        jQuery('#'+response.id).attr('data-prev_parent', response.prev_parent )
-        jQuery('#'+response.id + ' .item-name:first').html( response.title )
-        jQuery('#'+response.id + ' .item-add:first').on('click', function(e) {
-          window.create_group()
-        })
-        jQuery('#'+response.id + ' .item-edit:first').on('click', function(e) {
-          window.edit_modal({ id: response.id } )
-        })
-
-      } else {
-        console.log(response)
-      }
-
-      jQuery('.loading-spinner').removeClass('active')
-    })
-  }
-
-  window.edit_modal = ( data ) => {
-
-    // @todo open edit modal
-    jQuery('#edit-modal').foundation('open')
-
-  }
-
 });
