@@ -2,6 +2,7 @@ body {
     background-color: white !important;
 }
 #wrapper {
+    max-width: 1024px;
     margin: 0 auto;
 }
 #offCanvasLeft ul {
@@ -19,4 +20,29 @@ body {
     bottom: 20px;
     right: 20px;
     z-index: 100;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+.loading-field-spinner.active {
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    border: 0.25rem solid #919191;
+    border-top-color: black;
+    animation: spin 1s infinite linear;
+    display: inline-block;
+}
+.mapboxgl-ctrl-top-right.mapboxgl-ctrl{width:100% !important;margin:10px !important;}
+
+
+#map, #map-wrapper  {
+    height: 300px !important;
 }

@@ -323,84 +323,6 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         }
 
         switch( $params['action'] ) {
-            case 'onItemAdded':
-                dt_write_log('onItemAdded');
-                $fields = [
-                    "title" => $params['data']['title'],
-                    "group_status" => "active",
-                    "group_type" => "group",
-                    "coaches" => [
-                        "values" => [
-                            [ "value" => $post_id ]
-                        ]
-                    ]
-                ];
-                $new_post = DT_Posts::create_post('groups', $fields, true, false );
-                if ( ! is_wp_error( $new_post ) ) {
-                    return [
-                        'ID' => $new_post['ID'],
-                        'title' => $new_post['post_title'],
-                    ];
-                }
-                else {
-                    dt_write_log($new_post);
-                    return false;
-                }
-
-            case 'onItemCreated':
-                dt_write_log('onItemCreated');
-                $fields = [
-                    "title" => $params['data']['title'],
-                    "group_status" => "active",
-                    "group_type" => "group",
-                    "coaches" => [
-                        "values" => [
-                            [ "value" => $post_id ]
-                        ]
-                    ]
-                ];
-                $new_post = DT_Posts::create_post('groups', $fields, true, false );
-                if ( ! is_wp_error( $new_post ) ) {
-                    return [
-                        'ID' => $new_post['ID'],
-                        'title' => $new_post['title'],
-                    ];
-                }
-                else {
-                    dt_write_log($new_post);
-                    return false;
-                }
-
-            case 'onItemAddChildItem':
-                dt_write_log('onItemAddChildItem');
-                $fields = [
-                    "title" => $params['data']['title'],
-                    "group_status" => "active",
-                    "group_type" => "group",
-                    "coaches" => [
-                        "values" => [
-                            [ "value" => $post_id ]
-                        ]
-                    ],
-                    "parent_group" => [
-                        "values" => [
-                            [ "value" => $params['data']['parent_id'] ]
-                        ]
-                    ]
-                ];
-                $new_post = DT_Posts::create_post('groups', $fields, true, false );
-                if ( ! is_wp_error( $new_post ) ) {
-                    return [
-                        'ID' => $new_post['ID'],
-                        'title' => $new_post['title'],
-                        'parent_id' => $new_post['parent_group'][0]['ID'] ?? $params['data']['parent_id'] ?? 0
-                    ];
-                 }
-                else {
-                    dt_write_log($new_post);
-                    return false;
-                }
-
             case 'create_group':
                 dt_write_log('create_group');
 
@@ -475,6 +397,57 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                             VALUES (%s, %s, 'groups_to_groups');
                     ", $params['data']['self'], $params['data']['new_parent'] ) );
                 return true;
+
+            case 'get_group':
+                $id = $params['data']['id'];
+
+                $group = DT_Posts::get_post('groups', $id, true, false );
+                if ( empty( $group ) || is_wp_error( $group ) ) {
+                    return new WP_Error(__METHOD__, 'no group found with that id' );
+                }
+
+                // custom permission check. Contact must be coaching group to retrieve group
+                if ( ! isset( $group['coaches'] ) || empty( $group['coaches'] ) ) {
+                    return new WP_Error(__METHOD__, 'no coaching found for group' );
+                }
+                $found = false;
+                foreach( $group['coaches'] as $coach ) {
+                    if( (int) $coach['ID'] === (int) $post_id ) {
+                        $found = true;
+                    }
+                }
+
+                if ( $found ) {
+                    $group_fields = DT_Posts::get_post_field_settings('groups', true, false );
+                    return [
+                        'post_id' => $group['ID'],
+                        'post_type' => 'groups',
+                        'post_fields' => $group_fields,
+                        'post' => $group,
+                    ];
+                } else {
+                    return new WP_Error(__METHOD__, 'no coaching connection found' );
+                }
+
+            case 'update_group_title':
+                $post_id = $params['data']['post_id'];
+                $new_value = $params['data']['new_value'];
+
+                return DT_Posts::update_post('groups', $post_id, [ 'title' => trim( $new_value ) ], false, false );
+
+            case 'update_group_member_count':
+                $post_id = $params['data']['post_id'];
+                $new_value = $params['data']['new_value'];
+
+                return DT_Posts::update_post('groups', $post_id, [ 'member_count' => trim( $new_value ) ], false, false );
+
+            case 'update_group_location':
+                $post_id = $params['data']['post_id'];
+                $location_data = $params['data']['location_data'];
+
+
+                return DT_Posts::update_post('groups', $post_id, $location_data, false, false );
+
         }
         return false;
     }
