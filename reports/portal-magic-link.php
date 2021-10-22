@@ -15,12 +15,10 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
     public $post_type = 'contacts';
     private $meta_key = '';
     public $type_actions = [
-        '' => "Home",
+        '' => "Groups",
         'groups' => "Groups",
-        'people' => "People",
-        'prayer' => "prayer",
         'map' => "Map",
-        'pace' => "Pace",
+        'help' => "Help",
     ];
 
     private static $_instance = null;
@@ -57,19 +55,19 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         }
 
         // load if valid url
-        if ( 'groups' === $this->parts['action'] ) {
-            add_action( 'dt_blank_body', [ $this, 'groups_body' ] );
-        }
-        else if ( 'people' === $this->parts['action'] ) {
-            add_action( 'dt_blank_body', [ $this, 'people_body' ] );
-        }
-        else if ( 'map' === $this->parts['action'] ) {
+        if ( 'map' === $this->parts['action'] ) {
             add_action( 'dt_blank_body', [ $this, 'map_body' ] );
         }
+        else if ( 'groups' === $this->parts['action'] ) {
+            add_action( 'dt_blank_body', [ $this, 'groups_body' ] );
+        }
+        else if ( 'help' === $this->parts['action'] ) {
+            add_action( 'dt_blank_body', [ $this, 'help_body' ] );
+        }
         else if ( '' === $this->parts['action'] ) {
-            add_action( 'dt_blank_body', [ $this, 'home_body' ] );
+            add_action( 'dt_blank_body', [ $this, 'groups_body' ] );
         } else {
-            add_action( 'dt_blank_body', [ $this, 'home_body' ] );
+            add_action( 'dt_blank_body', [ $this, 'groups_body' ] );
         }
 
         // load if valid url
@@ -84,6 +82,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         $allowed_js[] = 'jquery-touch-punch';
         $allowed_js[] = 'portal-app-domenu-js';
         $allowed_js[] = 'mapbox-gl';
+        $allowed_js[] = 'introjs-js';
         return $allowed_js;
     }
 
@@ -91,6 +90,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         $allowed_css[] = 'portal-app-'.$this->type.'-css';
         $allowed_css[] = 'mapbox-gl-css';
         $allowed_css[] = 'portal-app-domenu-css';
+        $allowed_css[] = 'introjs-css';
         return $allowed_css;
     }
 
@@ -108,6 +108,12 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
 
         wp_enqueue_style( 'portal-app-domenu-css', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'jquery.domenu-0.100.77.css', [],
             filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'jquery.domenu-0.100.77.css' ) );
+
+        wp_enqueue_script( 'introjs-js', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'intro.min.js', [ ],
+            filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'intro.min.js' ), true );
+
+        wp_enqueue_style( 'introjs-css', trailingslashit( plugin_dir_url( __FILE__ ) ) . 'introjs.min.css', [],
+            filemtime( trailingslashit( plugin_dir_path( __FILE__ ) ) .'introjs.min.css' ) );
 
     }
 
@@ -181,24 +187,19 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
         }
     }
 
-    public function home_body(){
-        DT_Mapbox_API::geocoder_scripts();
-        require_once('portal-home-html.php');
-    }
-
     public function groups_body(){
         DT_Mapbox_API::geocoder_scripts();
         require_once('portal-groups-html.php');
     }
 
-    public function people_body(){
-        DT_Mapbox_API::geocoder_scripts();
-        require_once('portal-people-html.php');
-    }
-
     public function map_body(){
         DT_Mapbox_API::geocoder_scripts();
         require_once('portal-map-html.php');
+    }
+
+    public function help_body(){
+        DT_Mapbox_API::geocoder_scripts();
+        require_once('portal-help-html.php');
     }
 
     /**
@@ -335,7 +336,7 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                 $fields = [
                     "title" => $post['name'] . ' Group ' . $inc,
                     "group_status" => "active",
-                    "group_type" => "group",
+                    "group_type" => "church",
                     "coaches" => [
                         "values" => [
                             [ "value" => $post_id ]
@@ -359,6 +360,8 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                         'title' => $new_post['name'],
                         'prev_parent' => $parent_id,
                         'temp_id' => $temp_id,
+                        'post' => $new_post,
+                        'post_fields' => DT_Posts::get_post_field_settings('groups', true, false )
                     ];
                 }
                 else {
@@ -420,8 +423,6 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
                 if ( $found ) {
                     $group_fields = DT_Posts::get_post_field_settings('groups', true, false );
                     return [
-                        'post_id' => $group['ID'],
-                        'post_type' => 'groups',
                         'post_fields' => $group_fields,
                         'post' => $group,
                     ];
@@ -441,12 +442,23 @@ class DT_Contact_Portal_Magic_Link extends DT_Magic_Url_Base {
 
                 return DT_Posts::update_post('groups', $post_id, [ 'member_count' => trim( $new_value ) ], false, false );
 
+            case 'update_group_type':
+                $post_id = $params['data']['post_id'];
+                $new_value = $params['data']['new_value'];
+
+                return DT_Posts::update_post('groups', $post_id, [ 'group_type' => trim( $new_value ) ], false, false );
+
             case 'update_group_location':
                 $post_id = $params['data']['post_id'];
                 $location_data = $params['data']['location_data'];
 
-
                 return DT_Posts::update_post('groups', $post_id, $location_data, false, false );
+
+            case 'delete_group_location':
+                $post_id = $params['data']['post_id'];
+                delete_post_meta( $post_id, 'location_grid' );
+                delete_post_meta( $post_id, 'location_grid_meta' );
+                return Location_Grid_Meta::delete_location_grid_meta( $post_id, 'all', 0 );
 
         }
         return false;

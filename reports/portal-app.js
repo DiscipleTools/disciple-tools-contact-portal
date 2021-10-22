@@ -1,12 +1,30 @@
 
 jQuery(document).ready(function() {
-  if ( '' === jsObject.parts.action  ) {
+  if ( '' === jsObject.parts.action || 'groups' === jsObject.parts.action ) {
     window.load_tree()
-  } else if ( 'groups' === jsObject.parts.action  ) {
-    window.load_tree()
+    window.intro_home()
+  } else if (  'map' === jsObject.parts.action ) {
+    window.load_map()
   }
-
 });
+
+window.post_item = ( action, data ) => {
+  return jQuery.ajax({
+    type: "POST",
+    data: JSON.stringify({ action: action, parts: jsObject.parts, data: data }),
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    url: jsObject.root + jsObject.parts.root + '/v1/' + jsObject.parts.type,
+    beforeSend: function (xhr) {
+      xhr.setRequestHeader('X-WP-Nonce', jsObject.nonce )
+    }
+  })
+    .fail(function(e) {
+      console.log(e)
+      jQuery('#error').html(e)
+      jQuery('.loading-spinner').removeClass('active')
+    })
+}
 
 window.load_tree = () => {
   jQuery.ajax({
@@ -160,11 +178,50 @@ window.load_domenu = ( data ) => {
   })
   // set listener for edit button
   jQuery('#domenu-0 .item-edit').on('click', function(e) {
-    window.edit_modal(e.currentTarget.parentNode.parentNode.parentNode.id)
+    window.open_modal(e.currentTarget.parentNode.parentNode.parentNode.id)
   })
 }
+window.create_group = () => {
+  console.log('create_group')
+  jQuery('.loading-spinner').addClass('active')
+  window.open_empty_modal()
 
-window.edit_modal = ( id ) => {
+  console.log( window.new_item )
+
+  window.post_item('create_group', window.new_item )
+    .done(function(response){
+      console.log(response)
+      if ( response ) {
+
+        jQuery('#'+ response.temp_id).attr('id', response.id )
+        jQuery('#'+response.id).attr('data-prev_parent', response.prev_parent )
+        jQuery('#'+response.id + ' .item-name:first').html( response.title )
+        jQuery('#'+response.id + ' .item-add:first').on('click', function(e) {
+          window.create_group()
+        })
+        jQuery('#'+response.id + ' .item-edit:first').on('click', function(e) {
+          window.open_modal(response.id )
+        })
+
+        response.post.title = ""
+
+        window.load_modal_content( response.post, response.post_fields )
+
+      } else {
+        console.log(response)
+      }
+
+    })
+}
+window.open_empty_modal= () => {
+  let title = jQuery('#modal-title')
+  let content = jQuery('#modal-content')
+
+  title.empty().html(`<span class="loading-spinner active"></span>`)
+  content.empty()
+  jQuery('#edit-modal').foundation('open')
+}
+window.open_modal = ( id ) => {
   let title = jQuery('#modal-title')
   let content = jQuery('#modal-content')
 
@@ -177,22 +234,43 @@ window.edit_modal = ( id ) => {
     .done(function(response){
       console.log(response)
       if ( typeof response.errors === 'undefined' ) {
-        let member_count = 0
-        if ( typeof response.post.member_count !== 'undefined' ) {
-          member_count = response.post.member_count
-        }
+        window.load_modal_content( response.post, response.post_fields )
+      } else {
+        console.log(response)
+        jQuery('.loading-spinner').removeClass('active')
+      }
+    })
+}
 
-        // template
+window.load_modal_content = ( post, post_fields ) => {
+  let member_count = 0
+  if ( typeof post.member_count !== 'undefined' ) {
+    member_count = post.member_count
+  }
 
-        jQuery('#modal-title').html('<h1>Edit Group</h1><hr>')
-        jQuery('#modal-content').append(`
+  let type_select
+  let selected = 'church'
+  if ( typeof post.group_type !== "undefined" ) {
+    selected = post.group_type.key
+  }
+  jQuery.each( post_fields.group_type.default, function( i, v ) {
+    let preselect = ''
+    if ( i === selected ) {
+      preselect = ' selected'
+    }
+    type_select += '<option value="'+i+'" '+preselect+'>'+v.label+'</option>'
+  })
+
+  // template
+  jQuery('#modal-title').html('<h1>Edit Group</h1><hr>')
+  jQuery('#modal-content').append(`
           <div class="grid-x">
 
             <!-- title -->
             <div class="cell">
               Name<br>
               <div class="input-group">
-                <input type="text" style="border:0; border-bottom: 1px solid darkgrey;font-size:1.5rem;line-height: 2rem;" id="group_title" value="${response.post.name}" />
+                <input type="text" style="border:0; border-bottom: 1px solid darkgrey;font-size:1.5rem;line-height: 2rem;" id="group_title" placeholder="${post.name}" value="${post.title}" />
                 <div class="input-group-button">
                      <div><span class="loading-field-spinner group_title"></span></div>
                 </div>
@@ -210,6 +288,20 @@ window.edit_modal = ( id ) => {
               </div>
             </div>
 
+            <!-- type -->
+            <div class="cell">
+              Type of Group<br>
+              <div class="input-group">
+                <select id="group_type">
+                ${type_select}
+              </select>
+                <div class="input-group-button">
+                     <div><span class="loading-field-spinner group_type"></span></div>
+                </div>
+              </div>
+
+            </div>
+
             <!-- location -->
             <div class="cell" id="mapbox-select">
               Location<br>
@@ -217,106 +309,70 @@ window.edit_modal = ( id ) => {
                   <div id='map'></div>
               </div>
               <br>
-              <button type="button" onclick="save_new_location(${id})" id="result_display" style="display:none;" class="button primary-button-hollow add-location">Save</button>
+              <button type="button" onclick="save_new_location(${post.ID})" id="result_display" style="display:none;" class="button primary-button-hollow add-location">Save</button>
               <button type="button" onclick="cancel_new_location()" style="display:none;" class="button primary-button-hollow add-location">Cancel</button>
+              <button type="button" onclick="remove_location(${post.ID})" style="display:none;" class="button primary-button-hollow remove-location">Remove Location</button>
               <span class="loading-field-spinner group_location"></span>
             </div>
 
           </div>
         `)
 
-        // listeners
+  // listeners
 
-        jQuery('#group_title').on('change', function(e){
-          jQuery('.loading-field-spinner.group_title').addClass('active')
-          window.post_item('update_group_title', { post_id: id, new_value: e.target.value } )
-            .done(function(result) {
-              console.log(result)
-              if ( typeof result.errors === 'undefined') {
-                jQuery('#group_title').attr('value', result.name)
-                jQuery('#'+id + ' .item-name:first').html(result.name)
-              }
-              else {
-                console.log(result)
-              }
-              jQuery('.loading-field-spinner.group_title').removeClass('active')
-            })
-        })
-        jQuery('#group_member_count').on('change', function(e){
-          jQuery('.loading-field-spinner.group_member_count').addClass('active')
-          window.post_item('update_group_member_count', { post_id: id, new_value: e.target.value } )
-            .done(function(result) {
-              console.log(result)
-              if ( typeof result.errors === 'undefined') {
-                jQuery('#group_member_count').attr('value', result.member_count)
-              }
-              else {
-                console.log(result)
-              }
-              jQuery('.loading-field-spinner.group_member_count').removeClass('active')
-            })
-        })
-
-        let lng,lat
-        if( response.post.location_grid_meta ) {
-          lng = response.post.location_grid_meta[0].lng
-          lat = response.post.location_grid_meta[0].lat
+  jQuery('#group_title').on('change', function(e){
+    jQuery('.loading-field-spinner.group_title').addClass('active')
+    window.post_item('update_group_title', { post_id: post.ID, new_value: e.target.value } )
+      .done(function(result) {
+        console.log(result)
+        if ( typeof result.errors === 'undefined') {
+          jQuery('#group_title').attr('value', result.name)
+          jQuery('#'+post.ID + ' .item-name:first').html(result.name)
         }
-        load_mapbox(lng, lat)
-
-      } else {
-        console.log(response)
-      }
-
-      jQuery('.loading-spinner').removeClass('active')
-    })
-}
-
-window.post_item = ( action, data ) => {
-  return jQuery.ajax({
-    type: "POST",
-    data: JSON.stringify({ action: action, parts: jsObject.parts, data: data }),
-    contentType: "application/json; charset=utf-8",
-    dataType: "json",
-    url: jsObject.root + jsObject.parts.root + '/v1/' + jsObject.parts.type,
-    beforeSend: function (xhr) {
-      xhr.setRequestHeader('X-WP-Nonce', jsObject.nonce )
-    }
+        else {
+          console.log(result)
+        }
+        jQuery('.loading-field-spinner.group_title').removeClass('active')
+      })
   })
-    .fail(function(e) {
-      console.log(e)
-      jQuery('#error').html(e)
-      jQuery('.loading-spinner').removeClass('active')
-    })
-}
+  jQuery('#group_member_count').on('change', function(e){
+    jQuery('.loading-field-spinner.group_member_count').addClass('active')
+    window.post_item('update_group_member_count', { post_id: post.ID, new_value: e.target.value } )
+      .done(function(result) {
+        console.log(result)
+        if ( typeof result.errors === 'undefined') {
+          jQuery('#group_member_count').attr('value', result.member_count)
+        }
+        else {
+          console.log(result)
+        }
+        jQuery('.loading-field-spinner.group_member_count').removeClass('active')
+      })
+  })
+  jQuery('#group_type').on('change', function(e){
+    jQuery('.loading-field-spinner.group_type').addClass('active')
+    console.log(e.target.value)
+    window.post_item('update_group_type', { post_id: post.ID, new_value: e.target.value } )
+      .done(function(result) {
+        console.log(result)
+        if ( typeof result.errors === 'undefined') {
 
-window.create_group = () => {
-  console.log('create_group')
-  jQuery('.loading-spinner').addClass('active')
+        }
+        else {
+          console.log(result)
+        }
+        jQuery('.loading-field-spinner.group_type').removeClass('active')
+      })
+  })
 
-  console.log( window.new_item )
+  let lng,lat
+  if( post.location_grid_meta ) {
+    lng = post.location_grid_meta[0].lng
+    lat = post.location_grid_meta[0].lat
+  }
+  load_mapbox(lng, lat)
 
-  window.post_item('create_group', window.new_item )
-    .done(function(response){
-      console.log(response)
-      if ( response ) {
-
-        jQuery('#'+ response.temp_id).attr('id', response.id )
-        jQuery('#'+response.id).attr('data-prev_parent', response.prev_parent )
-        jQuery('#'+response.id + ' .item-name:first').html( response.title )
-        jQuery('#'+response.id + ' .item-add:first').on('click', function(e) {
-          window.create_group()
-        })
-        jQuery('#'+response.id + ' .item-edit:first').on('click', function(e) {
-          window.edit_modal(response.id )
-        })
-
-      } else {
-        console.log(response)
-      }
-
-      jQuery('.loading-spinner').removeClass('active')
-    })
+  jQuery('.loading-spinner').removeClass('active')
 }
 
 window.load_mapbox = (lng,lat) => {
@@ -354,7 +410,8 @@ window.load_mapbox = (lng,lat) => {
       easing: (t) => t,
       essential: true
     });
-    window.force_values = true
+    window.force_values = true // wipe out previous location data on the record
+    jQuery('.remove-location').show() // show the removal button
   }
 
 
@@ -492,7 +549,7 @@ window.load_mapbox = (lng,lat) => {
 function activate_geolocation() {
   jQuery(".mapboxgl-ctrl-geolocate").click();
 }
-function save_new_location( id) {
+function save_new_location( id ) {
   if ( typeof window.location_data === undefined || window.location_data === false ) {
     jQuery('#result_display').html(`You haven't selected anything yet. Click, search, or allow auto location.`)
     return;
@@ -505,6 +562,7 @@ function save_new_location( id) {
     .done(function(result) {
       console.log(result)
       jQuery('.add-location').hide();
+      jQuery('.remove-location').show();
       jQuery('.loading-field-spinner.group_location').removeClass('active')
     })
 }
@@ -514,5 +572,69 @@ function cancel_new_location() {
   if ( window.active_marker ) {
     window.active_marker.remove()
   }
+  // zoom map back out
   jQuery('.mapboxgl-ctrl-geocoder--input').val('')
 }
+function remove_location( id ) {
+  jQuery('.loading-field-spinner.group_location').addClass('active')
+  window.post_item('delete_group_location', { post_id: id } )
+    .done(function(result) {
+      console.log(result)
+      jQuery('.remove-location').hide();
+      jQuery('.loading-field-spinner.group_location').removeClass('active')
+      window.load_mapbox()
+    })
+
+}
+window.intro_home = () => {
+    introJs().setOptions({
+      steps: [
+        {
+          element: document.querySelector('#menu-icon'),
+          intro: "Access the side menu for help and other views.<br><img src='https://via.placeholder.com/150' />"
+        },
+        {
+          element: document.querySelector('.dd-new-item'),
+          intro: "Add new groups by clicking here.<br><img src='https://via.placeholder.com/150' />"
+        },
+        {
+          intro: "<img src='https://via.placeholder.com/150' /><img src='https://via.placeholder.com/150' /><br><img src='https://via.placeholder.com/150' /><img src='https://via.placeholder.com/150' /><br>"
+        }
+      ]
+    }).start();
+
+
+  console.log( 'has seen intro')
+  // @todo send record.
+}
+
+window.load_map = () => {
+
+  jQuery('#custom-style').empty().append(`
+        #wrapper {
+            height: ${window.innerHeight}px !important;
+        }
+        #map-wrapper {
+            height: ${window.innerHeight}px !important;
+        }
+        #map {
+            height: ${window.innerHeight}px !important;
+        }
+
+    `)
+
+
+
+  mapboxgl.accessToken = jsObject.map_key;
+  var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [-20, 30],
+    zoom: 1
+  });
+
+
+
+
+}
+

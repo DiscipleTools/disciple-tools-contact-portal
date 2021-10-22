@@ -1,7 +1,7 @@
 <!-- title -->
 <div class="grid-x">
     <div class="cell padding-1" >
-        <button type="button" style="margin:1em;" data-open="offCanvasLeft"><i class="fi-list" style="font-size:2em;"></i></button>
+        <button type="button" style="margin:1em;" id="menu-icon" data-open="offCanvasLeft"><i class="fi-list" style="font-size:2em;"></i></button>
         <span style="font-size:1.5rem;font-weight: bold;">Portal</span>
         <span class="loading-spinner active" style="float:right;margin:10px;"></span><!-- javascript container -->
     </div>
@@ -11,11 +11,6 @@
 <?php require_once ( 'portal-nav.php' ) ?>
 
 <div id="wrapper">
-    <div class="grid-x">
-        <div class="cell">
-            Thank you for giving us your progress!
-        </div>
-    </div>
     <div class="dd" id="domenu-0">
         <button class="dd-new-item">+</button>
         <li class="dd-item-blueprint" id="" data-prev_parent="domenu-0">
@@ -44,8 +39,11 @@
     <div id="modal-title"></div>
     <div id="modal-content"></div>
     <button class="close-button" data-close aria-label="Close modal" type="button">
-        <span aria-hidden="true">&times;</span>
+        <span aria-hidden="true">Close &times;</span>
     </button>
 </div>
+
+
+
 
 
